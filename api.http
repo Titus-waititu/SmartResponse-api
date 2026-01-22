@@ -1,0 +1,120 @@
+### Smart Accident Report System - API Testing
+### Base URL
+@baseUrl = http://localhost:3000/api/v1
+@accessToken = 
+
+### Health Check
+GET {{baseUrl}}/
+
+###
+
+### ============================================
+### Authentication Endpoints
+### ============================================
+
+### Register a new user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "username": "testuser",
+  "password": "SecurePass123!",
+  "displayName": "Test User"
+}
+
+###
+
+### Login with credentials
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "user@example.com",
+  "password": "SecurePass123!"
+}
+
+###
+
+### Save access token from login response
+@accessToken = {{login.response.body.access_token}}
+
+###
+
+### Get user profile (requires JWT token)
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Login with username instead of email
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "testuser",
+  "password": "SecurePass123!"
+}
+
+###
+
+### Google OAuth - Initiate login
+GET {{baseUrl}}/auth/google
+
+###
+
+### Google OAuth - Callback (handled by browser redirect)
+# GET {{baseUrl}}/auth/google/callback
+
+###
+
+### ============================================
+### Error Testing
+### ============================================
+
+### Register with invalid email
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "invalid-email",
+  "username": "testuser",
+  "password": "SecurePass123!"
+}
+
+###
+
+### Register with short password
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "user2@example.com",
+  "username": "testuser2",
+  "password": "123"
+}
+
+###
+
+### Login with wrong credentials
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "user@example.com",
+  "password": "WrongPassword"
+}
+
+###
+
+### Get profile without token
+GET {{baseUrl}}/auth/profile
+
+###
+
+### Get profile with invalid token
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer invalid_token_here
+
+###
