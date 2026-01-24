@@ -1,148 +1,309 @@
-import {
-  Injectable,
-  ConflictException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { RegisterDto, LoginDto } from './dto/create-auth.dto';
-import { User } from './entities/user.entity';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/users/entities/user.entity';
+import { Repository } from 'typeorm';
+import { CreateAuthDto } from './dto/create-auth.dto';
+import * as Bycrypt from 'bcrypt';
+import { ForgotPasswordDto } from './dto/forgotpassword.dto';
+import { ResetPasswordDto } from './dto/resetpassword.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
-  // In-memory user store for demonstration
-  // In production, replace this with a database (TypeORM, Prisma, etc.)
-  private users: User[] = [];
-  private userIdCounter = 1;
+  constructor(
+    @InjectRepository(User) private usersRepository: Repository<User>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly mailService: MailService,
+  ) {}
 
-  constructor(private jwtService: JwtService) {}
-
-  async register(
-    registerDto: RegisterDto,
-  ): Promise<{ user: Omit<User, 'password'>; accessToken: string }> {
-    const { email, username, password, displayName } = registerDto;
-
-    // Check if user already exists
-    const existingUser = this.users.find(
-      (u) => u.email === email || u.username === username,
-    );
-    if (existingUser) {
-      throw new ConflictException(
-        'User with this email or username already exists',
-      );
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create new user
-    const newUser: User = {
-      id: String(this.userIdCounter++),
-      email,
-      username,
-      password: hashedPassword,
-      displayName: displayName || username,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.users.push(newUser);
-
-    // Generate JWT token
-    const accessToken = this.generateToken(newUser);
-
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = newUser;
-
-    return { user: userWithoutPassword, accessToken };
+  private async hashData(data: string): Promise<string> {
+    const salt = await Bycrypt.genSalt(10);
+    return await Bycrypt.hash(data, salt);
   }
 
-  async validateUser(
-    identifier: string,
-    password: string,
-  ): Promise<Omit<User, 'password'> | null> {
-    // Find user by email or username
-    const user = this.users.find(
-      (u) => u.email === identifier || u.username === identifier,
-    );
-
-    if (!user || !user.password) {
-      return null;
-    }
-
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return null;
-    }
-
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+  // Helper method to remove password from profile
+  private async saveRefreshToken(userId: string, refreshToken: string) {
+    const hashedRefreshToken = await this.hashData(refreshToken);
+    await this.usersRepository.update(userId, {
+      hashedRefreshToken: hashedRefreshToken,
+    });
   }
 
-  async login(
-    user: User,
-  ): Promise<{ accessToken: string; user: Omit<User, 'password'> }> {
-    const accessToken = this.generateToken(user);
-    const { password: _, ...userWithoutPassword } = user;
-
+  async getTokens(id: string, email: string, role: string, username: string) {
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync(
+        {
+          sub: id,
+          email: email,
+          role: role,
+          username: username,
+        },
+        {
+          secret: this.configService.getOrThrow<string>(
+            'JWT_ACCESS_TOKEN_SECRET',
+          ),
+          expiresIn: this.configService.getOrThrow<string>(
+            'JWT_ACCESS_TOKEN_EXPIRATION_TIME',
+          ),
+        },
+      ),
+      this.jwtService.signAsync(
+        {
+          sub: id,
+          email: email,
+          role: role,
+          username: username,
+        },
+        {
+          secret: this.configService.getOrThrow<string>(
+            'JWT_REFRESH_TOKEN_SECRET',
+          ),
+          expiresIn: this.configService.getOrThrow<string>(
+            'JWT_REFRESH_TOKEN_EXPIRATION_TIME',
+          ),
+        },
+      ),
+    ]);
     return {
-      accessToken,
-      user: userWithoutPassword,
+      accessToken: at,
+      refreshToken: rt,
     };
   }
 
-  async validateGoogleUser(profile: {
-    googleId: string;
-    email: string;
-    displayName: string;
-    avatar?: string;
-  }): Promise<User> {
-    // Find user by Google ID or email
-    let user = this.users.find(
-      (u) => u.googleId === profile.googleId || u.email === profile.email,
-    );
+  async login(createAuthDto: CreateAuthDto) {
+    const { email, username, password } = createAuthDto;
+    const user = await this.usersRepository.findOne({
+      where: [{ email: email }, { username: username }],
+      select: [
+        'id',
+        'username',
+        'email',
+        'role',
+        'password',
+        'hashedRefreshToken',
+        'is_active',
+      ],
+    });
 
     if (!user) {
-      // Create new user from Google profile
-      user = {
-        id: String(this.userIdCounter++),
-        email: profile.email,
-        username: profile.email.split('@')[0], // Generate username from email
-        googleId: profile.googleId,
-        displayName: profile.displayName,
-        avatar: profile.avatar,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+      return {
+        success: false,
+        message: 'Invalid credentials',
       };
-      this.users.push(user);
-    } else if (!user.googleId) {
-      // Link existing account with Google
-      user.googleId = profile.googleId;
-      user.avatar = profile.avatar || user.avatar;
-      user.updatedAt = new Date();
     }
 
+    if (user.is_active === false) {
+      return {
+        success: false,
+        message: 'Account is inactive. Please contact support.',
+      };
+    }
+
+    const isPasswordValid = await Bycrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return {
+        success: false,
+        message: 'Invalid credentials',
+      };
+    }
+
+    const tokens = await this.getTokens(
+      user.id,
+      user.email,
+      user.role,
+      user.username,
+    );
+    await this.saveRefreshToken(user.id, tokens.refreshToken);
+    return {
+      success: true,
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        is_active: user.is_active,
+      },
+      tokens: {
+        ...tokens,
+      },
+    };
+  }
+  async logout(userId: string) {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'email', 'role', 'hashedRefreshToken'],
+    });
+
+    if (!user || !user.hashedRefreshToken) {
+      return {
+        success: false,
+        message: 'User not found or not logged in',
+      };
+    }
+
+    await this.usersRepository.update(userId, { hashedRefreshToken: null });
+    return {
+      success: true,
+      message: 'Logout successful',
+    };
+  }
+
+  async refreshTokens(id: string, refreshToken: string) {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      select: ['id', 'username', 'email', 'role', 'hashedRefreshToken'],
+    });
+
+    if (!user || !user.hashedRefreshToken) {
+      return {
+        success: false,
+        message: 'User not found or not logged in',
+      };
+    }
+
+    const isRefreshTokenValid = await Bycrypt.compare(
+      refreshToken,
+      user.hashedRefreshToken,
+    );
+    if (!isRefreshTokenValid) {
+      return {
+        success: false,
+        message: 'Invalid refresh token',
+      };
+    }
+
+    const tokens = await this.getTokens(
+      user.id,
+      user.email,
+      user.role,
+      user.username,
+    );
+    await this.saveRefreshToken(user.id, tokens.refreshToken);
+    return {
+      success: true,
+      message: 'Tokens refreshed successfully',
+      ...tokens,
+    };
+  }
+
+  async googleAuthRedirect(user: any) {
+    const { id, email, role, username } = user;
+    const { accessToken, refreshToken } = await this.getTokens(
+      id,
+      email,
+      role,
+      username,
+    );
+    return {
+      user: {
+        id,
+        username,
+        email,
+        role,
+      },
+      tokens: {
+        accessToken,
+        refreshToken,
+      },
+    };
+  }
+
+  async getUserById(userId: string) {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'username', 'email', 'role'],
+    });
     return user;
   }
 
-  private generateToken(user: User): string {
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      username: user.username,
-    };
-    return this.jwtService.sign(payload);
+   generateResetToken(userId: string, email: string) {
+    return this.jwtService.sign(
+      { userId, email },
+      {
+        secret: this.configService.getOrThrow<string>('JWT_RESET_TOKEN_SECRET'),
+        expiresIn: this.configService.getOrThrow<string>(
+          'JWT_RESET_TOKEN_EXPIRATION_TIME',
+        ),
+      },
+    );
   }
 
-  async getProfile(userId: string): Promise<Omit<User, 'password'> | null> {
-    const user = this.users.find((u) => u.id === userId);
-    if (!user) {
-      return null;
+  async verifyResetToken(token: string) {
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: this.configService.getOrThrow<string>('JWT_RESET_TOKEN_SECRET'),
+      });
+      const decodedEmail = decoded.email;
+      const user = await this.usersRepository.findOne({
+        where: { email: decodedEmail },
+        select: ['id'],
+      });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return user.id;
+    } catch (error) {
+      return `Invalid or expired reset token: ${error.message}`;
     }
-    const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+  }
+
+  async updateUserPassword(userId: string, newPassword: string) {
+    const hashedPassword = await Bycrypt.hash(newPassword, 10);
+    await this.usersRepository.update(userId, { password: hashedPassword });
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<string> {
+    const { email } = forgotPasswordDto;
+    const user = await this.usersRepository.findOne({
+      where: { email },
+      select: ['email', 'id'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    const token = await this.generateResetToken(user.id, user.email);
+    await this.mailService.sendResetEmail(email, token);
+    return 'Password reset email sent successfully';
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<string> {
+    const { token, newPassword, confirmPassword } = resetPasswordDto;
+
+    if (newPassword !== confirmPassword) {
+      throw new NotFoundException('Passwords do not match');
+    }
+
+    const userId = await this.verifyResetToken(token);
+    if (!userId) {
+      throw new NotFoundException('Invalid or expired reset token');
+    }
+
+    // Get user email for confirmation email
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['email'],
+    });
+
+    await this.updateUserPassword(userId, newPassword);
+
+    // Send confirmation email
+    if (user?.email) {
+      try {
+        await this.mailService.sendPasswordResetSuccessEmail(user.email);
+      } catch (error) {
+        console.error(
+          'Failed to send password reset confirmation email:',
+          error,
+        );
+      }
+    }
+
+    return 'Password has been reset successfully';
   }
 }

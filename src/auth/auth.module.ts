@@ -1,32 +1,37 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { LocalStrategy } from './strategies/local.strategy';
+import { DatabaseModule } from 'src/database/database.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from 'src/users/entities/user.entity';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { AtStrategy } from './strategies/at.strategy';
+import { RfStrategy } from './strategies/rt.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { GoogleStrategy } from './strategies/google.strategy';
+import { RolesGuard } from './guards/roles.guard';
+import { GoogleStrategy } from './strategies/google.strategies';
+import { MailService } from 'src/mail/mail.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    PassportModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'your-secret-key',
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d',
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    DatabaseModule,
+    TypeOrmModule.forFeature([User]),
+    JwtModule.register({
+      global: true,
+    }), // Register JwtModule with global configuration
+    PassportModule, // Register PassportModule for strategies
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
-  exports: [AuthService],
+  providers: [
+    AuthService,
+    AtStrategy,
+    RfStrategy,
+    JwtStrategy,
+    RolesGuard,
+    GoogleStrategy,
+    MailService,
+  ],
+  exports: [JwtModule, RolesGuard, AuthService],
 })
 export class AuthModule {}
