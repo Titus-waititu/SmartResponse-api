@@ -11,7 +11,7 @@ import { RfStrategy } from './strategies/rt.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles.guard';
 import { GoogleStrategy } from './strategies/google.strategies';
-import { MailService } from 'src/mail/mail.service';
+// import { MailService } from 'src/mail/mail.service';
 
 @Module({
   imports: [
@@ -30,7 +30,7 @@ import { MailService } from 'src/mail/mail.service';
     JwtStrategy,
     RolesGuard,
     GoogleStrategy,
-    MailService,
+    // MailService,
   ],
   exports: [JwtModule, RolesGuard, AuthService],
 })
