@@ -1,0 +1,11 @@
+export type UserRole = 'admin' | 'user' | 'guest';
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  createdAt: Date;
+  updatedAt: Date;
+}
