@@ -41,7 +41,7 @@ export class UsersController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.CUSTOMER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all users' })
   @ApiQuery({
     name: 'search',
@@ -57,7 +57,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.CUSTOMER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User retrieved successfully.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
@@ -66,7 +66,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.CUSTOMER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiResponse({ status: 200, description: 'User updated successfully.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
@@ -78,7 +78,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN, UserRole.VENDOR)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete user by ID' })
   @ApiResponse({ status: 200, description: 'User deleted successfully.' })
@@ -87,9 +87,14 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  @Get('vendors/nearby')
-  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.CUSTOMER)
-  @ApiOperation({ summary: 'Find vendors near location' })
+  @Get('responders/nearby')
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.POLICE,
+    UserRole.MEDICAL,
+    UserRole.FIRE_DEPARTMENT,
+  )
+  @ApiOperation({ summary: 'Find emergency responders near location' })
   @ApiQuery({ name: 'latitude', required: true, description: 'Latitude' })
   @ApiQuery({ name: 'longitude', required: true, description: 'Longitude' })
   @ApiQuery({
@@ -99,51 +104,51 @@ export class UsersController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Nearby vendors retrieved successfully.',
+    description: 'Nearby responders retrieved successfully.',
   })
-  findVendorsNearby(
+  findRespondersNearby(
     @Query('latitude', ParseFloatPipe) latitude: number,
     @Query('longitude', ParseFloatPipe) longitude: number,
     @Query('radius') radius?: string,
   ) {
     const radiusKm = radius ? parseFloat(radius) : 10;
-    return this.usersService.findVendorsNearLocation(
+    return this.usersService.findRespondersNearLocation(
       latitude,
       longitude,
       radiusKm,
     );
   }
 
-  @Get('vendors/city/:city')
-  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.CUSTOMER)
-  @ApiOperation({ summary: 'Find vendors by city' })
+  @Get('insurance-agents/city/:city')
+  @Roles(UserRole.ADMIN, UserRole.REPORTER)
+  @ApiOperation({ summary: 'Find insurance agents by city' })
   @ApiResponse({
     status: 200,
-    description: 'Vendors by city retrieved successfully.',
+    description: 'Insurance agents by city retrieved successfully.',
   })
-  findVendorsByCity(@Param('city') city: string) {
-    return this.usersService.findVendorsByCity(city);
+  findInsuranceAgentsByCity(@Param('city') city: string) {
+    return this.usersService.findInsuranceAgentsByCity(city);
   }
 
-  @Get('vendors/stats')
-  @Roles(UserRole.ADMIN, UserRole.VENDOR)
-  @ApiOperation({ summary: 'Get vendor statistics' })
+  @Get('system/stats')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get system statistics' })
   @ApiResponse({
     status: 200,
-    description: 'Vendor stats retrieved successfully.',
+    description: 'System stats retrieved successfully.',
   })
-  getVendorStats() {
-    return this.usersService.getVendorStats();
+  getSystemStats() {
+    return this.usersService.getSystemStats();
   }
 
   @Get('role/:role')
-  @Roles(UserRole.ADMIN, UserRole.VENDOR, UserRole.CUSTOMER)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get users by role' })
   @ApiResponse({
     status: 200,
     description: 'Users by role retrieved successfully.',
   })
   findByRole(@Param('role') role: string) {
-    return this.usersService.findByRole(role as any);
+    return this.usersService.findByRole(role as UserRole);
   }
 }

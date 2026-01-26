@@ -30,7 +30,7 @@ export class InsuranceClaimsController {
   @Roles(UserRole.REPORTER, UserRole.ADMIN)
   create(
     @Body() createInsuranceClaimDto: CreateInsuranceClaimDto,
-    @Request() req,
+    @Request() req: import('src/types/interfaces').RequestWithUser,
   ) {
     return this.insuranceClaimsService.create(
       createInsuranceClaimDto,
@@ -52,13 +52,15 @@ export class InsuranceClaimsController {
 
   @Get('my-claims')
   @Roles(UserRole.REPORTER)
-  findMyClaims(@Request() req) {
+  findMyClaims(@Request() req: import('src/types/interfaces').RequestWithUser) {
     return this.insuranceClaimsService.findByClaimant(req.user.sub);
   }
 
   @Get('my-assigned-claims')
   @Roles(UserRole.INSURANCE_AGENT)
-  findMyAssignedClaims(@Request() req) {
+  findMyAssignedClaims(
+    @Request() req: import('src/types/interfaces').RequestWithUser,
+  ) {
     return this.insuranceClaimsService.findByInsuranceAgent(req.user.sub);
   }
 

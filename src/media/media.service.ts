@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Media } from './entities/media.entity';
 import { CreateMediaDto } from './dto/create-media.dto';
+import { AccidentReport } from 'src/accident-reports/entities/accident-report.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class MediaService {
@@ -18,12 +20,15 @@ export class MediaService {
     try {
       const newMedia = this.mediaRepository.create({
         ...createMediaDto,
-        accident_report: { id: createMediaDto.accident_report_id } as any,
-        uploaded_by: { id: uploadedById } as any,
+        accident_report: {
+          id: createMediaDto.accident_report_id,
+        } as Partial<AccidentReport>,
+        uploaded_by: { id: uploadedById } as Partial<User>,
       });
       return await this.mediaRepository.save(newMedia);
     } catch (error) {
-      throw new Error('Error uploading media: ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error('Error uploading media: ' + message);
     }
   }
 

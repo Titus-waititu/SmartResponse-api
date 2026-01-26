@@ -33,7 +33,7 @@ export class AccidentReportsController {
   @Roles(UserRole.REPORTER, UserRole.ADMIN)
   create(
     @Body() createAccidentReportDto: CreateAccidentReportDto,
-    @Request() req,
+    @Request() req: import('src/types/interfaces').RequestWithUser,
   ) {
     return this.accidentReportsService.create(
       createAccidentReportDto,
@@ -63,7 +63,9 @@ export class AccidentReportsController {
 
   @Get('my-reports')
   @Roles(UserRole.REPORTER)
-  findMyReports(@Request() req) {
+  findMyReports(
+    @Request() req: import('src/types/interfaces').RequestWithUser,
+  ) {
     return this.accidentReportsService.findByReporter(req.user.sub);
   }
 

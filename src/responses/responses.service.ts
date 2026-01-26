@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Response, ResponseStatus } from './entities/response.entity';
 import { CreateResponseDto } from './dto/create-response.dto';
 import { UpdateResponseDto } from './dto/update-response.dto';
+import { AccidentReport } from 'src/accident-reports/entities/accident-report.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class ResponsesService {
@@ -19,13 +21,16 @@ export class ResponsesService {
     try {
       const newResponse = this.responseRepository.create({
         ...createResponseDto,
-        accident_report: { id: createResponseDto.accident_report_id } as any,
-        responder: { id: responderId } as any,
+        accident_report: {
+          id: createResponseDto.accident_report_id,
+        } as Partial<AccidentReport>,
+        responder: { id: responderId } as Partial<User>,
         dispatched_at: new Date(),
       });
       return await this.responseRepository.save(newResponse);
     } catch (error) {
-      throw new Error('Error creating response: ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error('Error creating response: ' + message);
     }
   }
 
@@ -71,7 +76,12 @@ export class ResponsesService {
   ): Promise<Response> {
     const response = await this.findOne(id);
 
-    const updateData: any = { ...updateResponseDto };
+    const updateData: UpdateResponseDto & {
+      arrived_at?: Date;
+      completed_at?: Date;
+    } = {
+      ...updateResponseDto,
+    };
 
     if (
       updateResponseDto.status === ResponseStatus.ON_SCENE &&

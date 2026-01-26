@@ -29,7 +29,10 @@ export class ResponsesController {
     UserRole.FIRE_DEPARTMENT,
     UserRole.ADMIN,
   )
-  create(@Body() createResponseDto: CreateResponseDto, @Request() req) {
+  create(
+    @Body() createResponseDto: CreateResponseDto,
+    @Request() req: import('src/types/interfaces').RequestWithUser,
+  ) {
     return this.responsesService.create(createResponseDto, req.user.sub);
   }
 
@@ -41,13 +44,17 @@ export class ResponsesController {
 
   @Get('my-responses')
   @Roles(UserRole.POLICE, UserRole.MEDICAL, UserRole.FIRE_DEPARTMENT)
-  findMyResponses(@Request() req) {
+  findMyResponses(
+    @Request() req: import('src/types/interfaces').RequestWithUser,
+  ) {
     return this.responsesService.findByResponder(req.user.sub);
   }
 
   @Get('my-active-responses')
   @Roles(UserRole.POLICE, UserRole.MEDICAL, UserRole.FIRE_DEPARTMENT)
-  getActiveResponses(@Request() req) {
+  getActiveResponses(
+    @Request() req: import('src/types/interfaces').RequestWithUser,
+  ) {
     return this.responsesService.getActiveResponsesByResponder(req.user.sub);
   }
 

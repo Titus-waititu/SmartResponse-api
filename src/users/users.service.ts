@@ -6,6 +6,7 @@ import { User } from './entities/user.entity';
 import { ILike, Repository } from 'typeorm';
 import { UserRole } from 'src/types';
 import * as bcrypt from 'bcrypt';
+import { SystemStatistics } from 'src/types/interfaces';
 
 @Injectable()
 export class UsersService {
@@ -21,6 +22,7 @@ export class UsersService {
 
   //helper methods 2
   private sanitizeUser(user: User): Partial<User> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, hashedRefreshToken, ...sanitizedUser } = user;
     return sanitizedUser;
   }
@@ -46,7 +48,8 @@ export class UsersService {
       const savedUser = await this.usersRepository.save(newUser);
       return this.sanitizeUser(savedUser);
     } catch (error) {
-      throw new Error('Error creating user: ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error('Error creating user: ' + message);
     }
   }
 
@@ -90,7 +93,9 @@ export class UsersService {
         return this.sanitizeUser(user);
       })
       .catch((error) => {
-        throw new Error(`Error finding user with ID ${id}: ${error.message}`);
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Error finding user with ID ${id}: ${message}`);
       });
   }
 
@@ -113,7 +118,9 @@ export class UsersService {
         return this.sanitizeUser(updatedUser);
       })
       .catch((error) => {
-        throw new Error(`Error updating user with ID ${id}: ${error.message}`);
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Error updating user with ID ${id}: ${message}`);
       });
   }
 
@@ -127,7 +134,9 @@ export class UsersService {
         return { message: `User with ID ${id} successfully deleted` };
       })
       .catch((error) => {
-        throw new Error(`Error deleting user with ID ${id}: ${error.message}`);
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Error deleting user with ID ${id}: ${message}`);
       });
   }
 
@@ -136,7 +145,9 @@ export class UsersService {
       .find({ where: { role } })
       .then((users) => users.map((user) => this.sanitizeUser(user)))
       .catch((error) => {
-        throw new Error(`Error finding users by role: ${error.message}`);
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Error finding users by role: ${message}`);
       });
   }
 
@@ -176,9 +187,9 @@ export class UsersService {
       .getMany()
       .then((users) => users.map((user) => this.sanitizeUser(user)))
       .catch((error) => {
-        throw new Error(
-          `Error finding responders near location: ${error.message}`,
-        );
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Error finding responders near location: ${message}`);
       });
   }
 
@@ -194,14 +205,14 @@ export class UsersService {
       })
       .then((users) => users.map((user) => this.sanitizeUser(user)))
       .catch((error) => {
-        throw new Error(
-          `Error finding insurance agents by city: ${error.message}`,
-        );
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Error finding insurance agents by city: ${message}`);
       });
   }
 
   // Get system statistics
-  async getSystemStats(): Promise<any> {
+  async getSystemStats(): Promise<SystemStatistics> {
     const [
       totalUsers,
       totalReporters,
@@ -272,7 +283,9 @@ export class UsersService {
       })
       .then((users) => users.map((user) => this.sanitizeUser(user)))
       .catch((error) => {
-        throw new Error(`Error finding responders: ${error.message}`);
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Error finding responders: ${message}`);
       });
   }
 }

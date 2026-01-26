@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { InsuranceClaim, ClaimStatus } from './entities/insurance-claim.entity';
 import { CreateInsuranceClaimDto } from './dto/create-insurance-claim.dto';
 import { UpdateInsuranceClaimDto } from './dto/update-insurance-claim.dto';
+import { InsuranceClaimStatistics } from 'src/types/interfaces';
+import { AccidentReport } from 'src/accident-reports/entities/accident-report.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class InsuranceClaimsService {
@@ -29,12 +32,13 @@ export class InsuranceClaimsService {
         claim_number: claimNumber,
         accident_report: {
           id: createInsuranceClaimDto.accident_report_id,
-        } as any,
-        claimant: { id: claimantId } as any,
+        } as Partial<AccidentReport>,
+        claimant: { id: claimantId } as Partial<User>,
       });
       return await this.insuranceClaimRepository.save(newClaim);
     } catch (error) {
-      throw new Error('Error creating insurance claim: ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error('Error creating insurance claim: ' + message);
     }
   }
 
@@ -100,7 +104,7 @@ export class InsuranceClaimsService {
     agentId: string,
   ): Promise<InsuranceClaim> {
     await this.insuranceClaimRepository.update(claimId, {
-      insurance_agent: { id: agentId } as any,
+      insurance_agent: { id: agentId } as Partial<User>,
       status: ClaimStatus.UNDER_REVIEW,
     });
     return await this.findOne(claimId);
@@ -110,9 +114,11 @@ export class InsuranceClaimsService {
     id: string,
     updateInsuranceClaimDto: UpdateInsuranceClaimDto,
   ): Promise<InsuranceClaim> {
-    const claim = await this.findOne(id);
+    await this.findOne(id);
 
-    const updateData: any = { ...updateInsuranceClaimDto };
+    const updateData: UpdateInsuranceClaimDto & { processed_at?: Date } = {
+      ...updateInsuranceClaimDto,
+    };
 
     if (
       updateInsuranceClaimDto.status === ClaimStatus.APPROVED ||
@@ -134,7 +140,7 @@ export class InsuranceClaimsService {
     return { message: `Insurance claim with ID ${id} successfully deleted` };
   }
 
-  async getStatistics(): Promise<any> {
+  async getStatistics(): Promise<InsuranceClaimStatistics> {
     const [
       totalClaims,
       submittedClaims,
@@ -164,13 +170,13 @@ export class InsuranceClaimsService {
       this.insuranceClaimRepository
         .createQueryBuilder('claim')
         .select('SUM(claim.estimated_damage_cost)', 'total')
-        .getRawOne()
-        .then((result) => parseFloat(result.total) || 0),
+        .getRawOne<import('src/types/interfaces').QueryResult>()
+        .then((result) => parseFloat(result?.total || '0') || 0),
       this.insuranceClaimRepository
         .createQueryBuilder('claim')
         .select('SUM(claim.approved_amount)', 'total')
-        .getRawOne()
-        .then((result) => parseFloat(result.total) || 0),
+        .getRawOne<import('src/types/interfaces').QueryResult>()
+        .then((result) => parseFloat(result?.total || '0') || 0),
     ]);
 
     return {

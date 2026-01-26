@@ -8,6 +8,8 @@ import {
 } from './entities/accident-report.entity';
 import { CreateAccidentReportDto } from './dto/create-accident-report.dto';
 import { UpdateAccidentReportDto } from './dto/update-accident-report.dto';
+import { User } from 'src/users/entities/user.entity';
+import type { AccidentReportStatistics } from 'src/types/interfaces';
 
 @Injectable()
 export class AccidentReportsService {
@@ -23,11 +25,12 @@ export class AccidentReportsService {
     try {
       const newReport = this.accidentReportRepository.create({
         ...createAccidentReportDto,
-        reporter: { id: reporterId } as any,
+        reporter: { id: reporterId } as Partial<User>,
       });
       return await this.accidentReportRepository.save(newReport);
     } catch (error) {
-      throw new Error('Error creating accident report: ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error('Error creating accident report: ' + message);
     }
   }
 
@@ -106,16 +109,20 @@ export class AccidentReportsService {
     id: string,
     updateAccidentReportDto: UpdateAccidentReportDto,
   ): Promise<AccidentReport> {
-    const report = await this.findOne(id);
+    await this.findOne(id);
+
+    const updateData: UpdateAccidentReportDto & { resolved_at?: Date } = {
+      ...updateAccidentReportDto,
+    };
 
     if (
       updateAccidentReportDto.status === AccidentStatus.RESOLVED ||
       updateAccidentReportDto.status === AccidentStatus.CLOSED
     ) {
-      updateAccidentReportDto['resolved_at'] = new Date();
+      updateData.resolved_at = new Date();
     }
 
-    await this.accidentReportRepository.update(id, updateAccidentReportDto);
+    await this.accidentReportRepository.update(id, updateData);
     return await this.findOne(id);
   }
 
@@ -127,7 +134,7 @@ export class AccidentReportsService {
     return { message: `Accident report with ID ${id} successfully deleted` };
   }
 
-  async getStatistics(): Promise<any> {
+  async getStatistics(): Promise<AccidentReportStatistics> {
     const [
       totalReports,
       activeReports,
@@ -166,18 +173,18 @@ export class AccidentReportsService {
       this.accidentReportRepository
         .createQueryBuilder('report')
         .select('SUM(report.vehicles_involved)', 'total')
-        .getRawOne()
-        .then((result) => parseInt(result.total) || 0),
+        .getRawOne<import('src/types/interfaces').QueryResult>()
+        .then((result) => parseInt(result?.total || '0') || 0),
       this.accidentReportRepository
         .createQueryBuilder('report')
         .select('SUM(report.injuries_reported)', 'total')
-        .getRawOne()
-        .then((result) => parseInt(result.total) || 0),
+        .getRawOne<import('src/types/interfaces').QueryResult>()
+        .then((result) => parseInt(result?.total || '0') || 0),
       this.accidentReportRepository
         .createQueryBuilder('report')
         .select('SUM(report.fatalities)', 'total')
-        .getRawOne()
-        .then((result) => parseInt(result.total) || 0),
+        .getRawOne<import('src/types/interfaces').QueryResult>()
+        .then((result) => parseInt(result?.total || '0') || 0),
     ]);
 
     return {

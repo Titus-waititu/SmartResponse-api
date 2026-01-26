@@ -18,7 +18,10 @@ export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @Post()
-  create(@Body() createMediaDto: CreateMediaDto, @Request() req) {
+  create(
+    @Body() createMediaDto: CreateMediaDto,
+    @Request() req: import('src/types/interfaces').RequestWithUser,
+  ) {
     return this.mediaService.create(createMediaDto, req.user.sub);
   }
 

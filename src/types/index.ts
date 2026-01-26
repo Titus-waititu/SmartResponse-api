@@ -16,3 +16,5 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export * from './interfaces';

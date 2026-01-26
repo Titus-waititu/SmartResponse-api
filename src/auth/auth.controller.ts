@@ -66,8 +66,12 @@ export class AuthController {
   @Public()
   @Get('google/callback')
   @UseGuards(GoogleOauthGuard)
-  async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const user = req.user;
+  async googleAuthRedirect(
+    @Req() req: import('src/types/interfaces').RequestWithUser,
+    @Res() res: Response,
+  ) {
+    const user =
+      req.user as unknown as import('src/types/interfaces').GoogleUser;
     if (!user) {
       throw new UnauthorizedException('Google authentication failed');
     }
@@ -79,16 +83,16 @@ export class AuthController {
     const frontendURL = new URL('http://localhost:3000/auth/google/callback');
     frontendURL.searchParams.set('accessToken', accessToken);
     frontendURL.searchParams.set('refreshToken', refreshToken);
-    frontendURL.searchParams.set('id', result.user.id);
-    frontendURL.searchParams.set('role', result.user.role);
-    frontendURL.searchParams.set('username', result.user.username);
-    frontendURL.searchParams.set('email', result.user.email);
+    frontendURL.searchParams.set('id', String(result.user.id));
+    frontendURL.searchParams.set('role', String(result.user.role));
+    frontendURL.searchParams.set('username', String(result.user.username));
+    frontendURL.searchParams.set('email', String(result.user.email));
     // Redirect to frontend with tokens and role in URL
     return res.redirect(frontendURL.toString());
   }
 
   @Get('me')
-   getMe(@Req() req: Request) {
+  getMe(@Req() req: import('src/types/interfaces').RequestWithUser) {
     // `req.user` is populated by AtStrategy (global guard)
     if (!req.user) {
       throw new UnauthorizedException('User not authenticated');
@@ -96,10 +100,10 @@ export class AuthController {
 
     // The JWT payload now contains: { sub, email, role, username }
     return {
-      id: req.user['sub'],
-      username: req.user['username'],
-      email: req.user['email'],
-      role: req.user['role'],
+      id: String(req.user.sub),
+      username: String(req.user.username),
+      email: String(req.user.email),
+      role: String(req.user.role),
     };
   }
 

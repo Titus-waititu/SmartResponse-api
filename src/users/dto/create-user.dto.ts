@@ -9,11 +9,10 @@ import {
   MaxLength,
   Min,
   Max,
-  IsUUID,
   IsBoolean,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ServiceProviderStatus, UserRole } from 'src/types';
+import { UserRole } from 'src/types';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUserDto {
@@ -45,7 +44,7 @@ export class CreateUserDto {
   @ApiPropertyOptional({
     description: 'User role',
     enum: UserRole,
-    default: UserRole.CUSTOMER,
+    default: UserRole.REPORTER,
   })
   @IsEnum(UserRole)
   @IsOptional()
@@ -78,16 +77,11 @@ export class CreateUserDto {
   @MaxLength(100)
   city?: string;
 
-  @ApiPropertyOptional({
-    description: 'Service provider online/offline status',
-    enum: ServiceProviderStatus,
-    default: ServiceProviderStatus.ONLINE,
-  })
+  @ApiPropertyOptional({ description: 'State', example: 'NY' })
   @IsOptional()
-  @IsEnum(ServiceProviderStatus, {
-    message: 'status must be one of the predefined service provider statuses.',
-  })
-  status?: ServiceProviderStatus;
+  @IsString()
+  @MaxLength(100)
+  state?: string;
 
   @ApiPropertyOptional({ description: 'Postal code', example: '10001' })
   @IsOptional()
@@ -95,76 +89,65 @@ export class CreateUserDto {
   @MaxLength(20)
   postal_code?: string;
 
+  // Emergency responder specific fields
   @ApiPropertyOptional({
-    description: 'Commission rate (%) for vendor',
-    example: 15,
+    description: 'Badge number (for emergency responders)',
+    example: 'BADGE-12345',
   })
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  commission_rate?: number;
+  @IsString()
+  @MaxLength(50)
+  badge_number?: string;
 
-  // 🧼 Vendor-specific fields
   @ApiPropertyOptional({
-    description: 'Business name (for vendors)',
-    example: 'Premium Car Wash',
+    description: 'Department name (for emergency responders)',
+    example: 'NYPD 5th Precinct',
   })
   @IsOptional()
   @IsString()
   @MaxLength(200)
-  business_name?: string;
+  department_name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Vehicle number (for emergency responders)',
+    example: 'UNIT-123',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  vehicle_number?: string;
+
+  // Insurance agent specific fields
+  @ApiPropertyOptional({
+    description: 'Insurance company name (for insurance agents)',
+    example: 'State Farm',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  insurance_company?: string;
+
+  @ApiPropertyOptional({
+    description: 'License number (for insurance agents)',
+    example: 'LIC-789456',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  license_number?: string;
 
   @ApiPropertyOptional({ description: 'Image URL' })
   @IsOptional()
   @IsString()
   image_url?: string;
 
-  // add is active field for vendors
   @ApiPropertyOptional({
-    description: 'Is the vendor active?',
+    description: 'Is the user active?',
     default: true,
   })
   @IsOptional()
   @IsBoolean()
   is_active?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Business license number',
-    example: 'BL123456',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  business_license?: string;
-
-  @ApiPropertyOptional({
-    description: 'Business description',
-    example: 'We provide eco-friendly car wash services...',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  business_description?: string;
-
-  @ApiPropertyOptional({
-    description: 'Service radius (in km)',
-    example: 10.5,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  service_radius_km?: number;
-
-  // 🔗 Optional location linkage for vendors
-  @ApiPropertyOptional({
-    description: 'ID of the car wash location this vendor belongs to',
-    example: 'c9b2cfe0-41dd-4310-a9b7-9d1b5014f1f4',
-  })
-  @IsUUID()
-  @IsOptional()
-  locationId?: string;
 
   @IsOptional()
   @Transform(() => new Date())

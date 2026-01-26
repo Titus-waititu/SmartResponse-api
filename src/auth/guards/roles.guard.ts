@@ -20,8 +20,8 @@ export class RolesGuard implements CanActivate {
     private userRepository: Repository<User>,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredRoles = await this.reflector.getAllAndOverride<UserRole[]>(
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
     );
@@ -43,6 +43,6 @@ export class RolesGuard implements CanActivate {
       return false;
     }
 
-    return requiredRoles.some((role) => userRole === role);
+    return requiredRoles.some((role) => String(userRole) === String(role));
   }
 }

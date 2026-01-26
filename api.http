@@ -2,6 +2,11 @@
 ### Base URL
 @baseUrl = http://localhost:3000/api/v1
 @accessToken = 
+@userId = 
+@reportId = 
+@responseId = 
+@mediaId = 
+@claimId = 
 
 ### Health Check
 GET {{baseUrl}}/
@@ -12,49 +17,43 @@ GET {{baseUrl}}/
 ### Authentication Endpoints
 ### ============================================
 
-### Register a new user
-POST {{baseUrl}}/auth/register
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "username": "testuser",
-  "password": "SecurePass123!",
-  "displayName": "Test User"
-}
-
-###
-
 ### Login with credentials
 # @name login
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "user@example.com",
+  "identifier": "admin@example.com",
   "password": "SecurePass123!"
 }
 
 ###
 
 ### Save access token from login response
-@accessToken = {{login.response.body.access_token}}
+@accessToken = {{login.response.body.tokens.accessToken}}
+@userId = {{login.response.body.user.id}}
 
 ###
 
-### Get user profile (requires JWT token)
-GET {{baseUrl}}/auth/profile
+### Get current user (me)
+GET {{baseUrl}}/auth/me
 Authorization: Bearer {{accessToken}}
 
 ###
 
-### Login with username instead of email
-POST {{baseUrl}}/auth/login
+### Refresh token
+GET {{baseUrl}}/auth/refresh?id={{userId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Logout
+GET {{baseUrl}}/auth/logout
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
-  "identifier": "testuser",
-  "password": "SecurePass123!"
+  "userId": "{{userId}}"
 }
 
 ###
@@ -69,33 +68,402 @@ GET {{baseUrl}}/auth/google
 
 ###
 
-### ============================================
-### Error Testing
-### ============================================
-
-### Register with invalid email
-POST {{baseUrl}}/auth/register
+### Forgot Password
+POST {{baseUrl}}/auth/forgot-password
 Content-Type: application/json
 
 {
-  "email": "invalid-email",
-  "username": "testuser",
-  "password": "SecurePass123!"
+  "email": "user@example.com"
 }
 
 ###
 
-### Register with short password
-POST {{baseUrl}}/auth/register
+### Reset Password
+POST {{baseUrl}}/auth/reset-password
 Content-Type: application/json
 
 {
-  "email": "user2@example.com",
-  "username": "testuser2",
-  "password": "123"
+  "token": "reset_token_here",
+  "newPassword": "NewSecurePass123!"
 }
 
 ###
+
+### ============================================
+### Users Management Endpoints
+### ============================================
+
+### Create a new user (Admin only)
+POST {{baseUrl}}/users
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "SecurePass123!",
+  "role": "REPORTER",
+  "phone_number": "+1234567890",
+  "full_name": "John Doe",
+  "address": "123 Main St",
+  "city": "New York",
+  "state": "NY",
+  "zip_code": "10001"
+}
+
+###
+
+### Get all users
+GET {{baseUrl}}/users
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Search users
+GET {{baseUrl}}/users?search=john
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get user by ID
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update user
+PATCH {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "full_name": "John Updated",
+  "phone_number": "+1234567899"
+}
+
+###
+
+### Delete user (Admin only)
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get responders nearby
+GET {{baseUrl}}/users/responders/nearby?latitude=40.7128&longitude=-74.0060&radius=10
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get users by role
+GET {{baseUrl}}/users/role/POLICE
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get insurance agents by city
+GET {{baseUrl}}/users/insurance-agents/city/New%20York
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get system statistics
+GET {{baseUrl}}/users/system/stats
+Authorization: Bearer {{accessToken}}
+
+###
+
+### ============================================
+### Accident Reports Endpoints
+### ============================================
+
+### Create accident report
+# @name createReport
+POST {{baseUrl}}/accident-reports
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "location": "Broadway & 42nd St",
+  "latitude": 40.7580,
+  "longitude": -73.9855,
+  "description": "Two vehicle collision at intersection",
+  "severity": "MODERATE",
+  "status": "REPORTED",
+  "vehicles_involved": 2,
+  "injuries_reported": 1,
+  "fatalities": 0,
+  "weather_conditions": "Clear",
+  "road_conditions": "Dry"
+}
+
+###
+
+@reportId = {{createReport.response.body.id}}
+
+###
+
+### Get all accident reports
+GET {{baseUrl}}/accident-reports
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Filter accident reports by status
+GET {{baseUrl}}/accident-reports?status=REPORTED
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get accident report statistics
+GET {{baseUrl}}/accident-reports/statistics
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get my reports (Reporter only)
+GET {{baseUrl}}/accident-reports/my-reports
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get nearby reports
+GET {{baseUrl}}/accident-reports/nearby?latitude=40.7128&longitude=-74.0060&radius=5
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get accident report by ID
+GET {{baseUrl}}/accident-reports/{{reportId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update accident report
+PATCH {{baseUrl}}/accident-reports/{{reportId}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "status": "UNDER_INVESTIGATION",
+  "injuries_reported": 2
+}
+
+###
+
+### Delete accident report
+DELETE {{baseUrl}}/accident-reports/{{reportId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### ============================================
+### Responses (Emergency Dispatch) Endpoints
+### ============================================
+
+### Create emergency response
+# @name createResponse
+POST {{baseUrl}}/responses
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "accident_report_id": "{{reportId}}",
+  "response_type": "POLICE",
+  "status": "DISPATCHED",
+  "eta_minutes": 15,
+  "notes": "Unit dispatched to scene"
+}
+
+###
+
+@responseId = {{createResponse.response.body.id}}
+
+###
+
+### Get all responses (Admin only)
+GET {{baseUrl}}/responses
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get my responses (Responder only)
+GET {{baseUrl}}/responses/my-responses
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get my active responses
+GET {{baseUrl}}/responses/my-active-responses
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get responses by accident report
+GET {{baseUrl}}/responses/accident-report/{{reportId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get response by ID
+GET {{baseUrl}}/responses/{{responseId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update response status
+PATCH {{baseUrl}}/responses/{{responseId}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "status": "ARRIVED",
+  "notes": "On scene, assessing situation"
+}
+
+###
+
+### Delete response
+DELETE {{baseUrl}}/responses/{{responseId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### ============================================
+### Media Endpoints
+### ============================================
+
+### Upload media to accident report
+# @name uploadMedia
+POST {{baseUrl}}/media
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "accident_report_id": "{{reportId}}",
+  "media_type": "IMAGE",
+  "file_url": "https://example.com/accident-photo.jpg",
+  "description": "Photo of vehicle damage"
+}
+
+###
+
+@mediaId = {{uploadMedia.response.body.id}}
+
+###
+
+### Get media by accident report
+GET {{baseUrl}}/media/accident-report/{{reportId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get media by ID
+GET {{baseUrl}}/media/{{mediaId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Delete media
+DELETE {{baseUrl}}/media/{{mediaId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### ============================================
+### Insurance Claims Endpoints
+### ============================================
+
+### Create insurance claim
+# @name createClaim
+POST {{baseUrl}}/insurance-claims
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "accident_report_id": "{{reportId}}",
+  "estimated_damage_cost": 5000.00,
+  "description": "Front bumper damage and headlight broken",
+  "claimant_contact": "+1234567890",
+  "insurance_company": "State Farm"
+}
+
+###
+
+@claimId = {{createClaim.response.body.id}}
+
+###
+
+### Get all insurance claims (Admin/Agent)
+GET {{baseUrl}}/insurance-claims
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Filter claims by status
+GET {{baseUrl}}/insurance-claims?status=SUBMITTED
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get insurance claim statistics
+GET {{baseUrl}}/insurance-claims/statistics
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get my claims (Reporter only)
+GET {{baseUrl}}/insurance-claims/my-claims
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get my assigned claims (Insurance Agent only)
+GET {{baseUrl}}/insurance-claims/my-assigned-claims
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get claim by claim number
+GET {{baseUrl}}/insurance-claims/claim-number/CLAIM-20260126-001
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Get claim by ID
+GET {{baseUrl}}/insurance-claims/{{claimId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Assign claim to insurance agent
+PATCH {{baseUrl}}/insurance-claims/{{claimId}}/assign/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Update insurance claim
+PATCH {{baseUrl}}/insurance-claims/{{claimId}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "status": "UNDER_REVIEW",
+  "approved_amount": 4500.00,
+  "notes": "Claim approved with minor adjustment"
+}
+
+###
+
+### Delete insurance claim
+DELETE {{baseUrl}}/insurance-claims/{{claimId}}
+Authorization: Bearer {{accessToken}}
+
+###
+
+### ============================================
+### Error Testing & Edge Cases
+### ============================================
 
 ### Login with wrong credentials
 POST {{baseUrl}}/auth/login
@@ -108,13 +476,46 @@ Content-Type: application/json
 
 ###
 
-### Get profile without token
-GET {{baseUrl}}/auth/profile
+### Create report without authentication
+POST {{baseUrl}}/accident-reports
+Content-Type: application/json
+
+{
+  "location": "Test Location",
+  "latitude": 40.7128,
+  "longitude": -74.0060,
+  "description": "Test report"
+}
 
 ###
 
-### Get profile with invalid token
-GET {{baseUrl}}/auth/profile
-Authorization: Bearer invalid_token_here
+### Get report with invalid ID
+GET {{baseUrl}}/accident-reports/invalid-uuid-format
+Authorization: Bearer {{accessToken}}
+
+###
+
+### Create user with invalid email
+POST {{baseUrl}}/users
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "username": "testuser",
+  "email": "invalid-email",
+  "password": "SecurePass123!",
+  "role": "REPORTER"
+}
+
+###
+
+### Create report with missing required fields
+POST {{baseUrl}}/accident-reports
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "location": "Test Location"
+}
 
 ###

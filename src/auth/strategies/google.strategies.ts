@@ -4,8 +4,9 @@ import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { Strategy, VerifyCallback } from 'passport-google-oauth2';
+import { Strategy, VerifyCallback, Profile } from 'passport-google-oauth20';
 import { UserRole } from 'src/types';
+import { GoogleUser } from 'src/types/interfaces';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -24,10 +25,14 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     _accessToken: string,
     _refreshToken: string,
-    profile: any,
+    profile: Profile,
     done: VerifyCallback,
-  ): Promise<any> {
-    const { id, name, emails, photos } = profile;
+  ): Promise<void> {
+    const { name, emails, photos } = profile;
+
+    if (!emails || !emails[0]) {
+      return done(new Error('No email found in profile'), undefined);
+    }
 
     // Check if user already exists in DB
     let user = await this.userRepository.findOne({
@@ -36,23 +41,23 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
     // Create user if doesn't exist
     if (!user) {
+      const imageUrl = photos?.[0]?.value;
       user = this.userRepository.create({
         email: emails[0].value,
-        username: name.givenName || name.familyName,
-        role: UserRole.CUSTOMER,
-        image_url: photos[0].value,
+        username: name?.givenName || name?.familyName || 'User',
+        role: UserRole.REPORTER,
+        ...(imageUrl && { image_url: imageUrl }),
       });
       await this.userRepository.save(user);
     }
 
-    done(null, {
+    const googleUser: GoogleUser = {
       id: user.id,
       email: user.email,
-      username: user.username,
       role: user.role,
-      image_url: photos[0].value,
-      providerId: id,
-      provider: 'google',
-    });
+      username: user.username,
+    };
+
+    done(null, googleUser);
   }
 }

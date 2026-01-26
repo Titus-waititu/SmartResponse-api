@@ -3,16 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy, StrategyOptionsWithRequest } from 'passport-jwt';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
-
-interface JwtPayload {
-  sub: string;
-  email: string;
-  [key: string]: any;
-}
-
-interface JwtPayloadWithRt extends JwtPayload {
-  refreshToken: string;
-}
+import { JwtPayload, JwtPayloadWithRt } from 'src/types/interfaces';
 
 @Injectable()
 export class RfStrategy extends PassportStrategy(Strategy, 'jwt-rt') {
