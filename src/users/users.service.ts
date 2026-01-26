@@ -140,15 +140,17 @@ export class UsersService {
       });
   }
 
-  // Location-based service discovery
-  async findVendorsNearLocation(
+  // Find emergency responders near accident location
+  async findRespondersNearLocation(
     latitude: number,
     longitude: number,
     radiusKm: number = 10,
   ): Promise<Partial<User>[]> {
     return await this.usersRepository
       .createQueryBuilder('user')
-      .where('user.role = :role', { role: UserRole.VENDOR })
+      .where('user.role IN (:...roles)', {
+        roles: [UserRole.POLICE, UserRole.MEDICAL, UserRole.FIRE_DEPARTMENT],
+      })
       .andWhere('user.is_active = :active', { active: true })
       .andWhere(
         `(
@@ -175,47 +177,102 @@ export class UsersService {
       .then((users) => users.map((user) => this.sanitizeUser(user)))
       .catch((error) => {
         throw new Error(
-          `Error finding vendors near location: ${error.message}`,
+          `Error finding responders near location: ${error.message}`,
         );
       });
   }
 
-  async findVendorsByCity(city: string): Promise<Partial<User>[]> {
+  // Find insurance agents by city
+  async findInsuranceAgentsByCity(city: string): Promise<Partial<User>[]> {
     return await this.usersRepository
       .find({
         where: {
-          role: UserRole.VENDOR,
+          role: UserRole.INSURANCE_AGENT,
           city,
           is_active: true,
         },
       })
       .then((users) => users.map((user) => this.sanitizeUser(user)))
       .catch((error) => {
-        throw new Error(`Error finding vendors by city: ${error.message}`);
+        throw new Error(
+          `Error finding insurance agents by city: ${error.message}`,
+        );
       });
   }
 
-  async getVendorStats(): Promise<any> {
-    const [totalVendors, activeVendors, totalCustomers] = await Promise.all([
-      this.usersRepository.count({ where: { role: UserRole.VENDOR } }),
+  // Get system statistics
+  async getSystemStats(): Promise<any> {
+    const [
+      totalUsers,
+      totalReporters,
+      totalPolice,
+      totalMedical,
+      totalFireDept,
+      totalInsuranceAgents,
+      activeResponders,
+    ] = await Promise.all([
+      this.usersRepository.count(),
+      this.usersRepository.count({ where: { role: UserRole.REPORTER } }),
+      this.usersRepository.count({ where: { role: UserRole.POLICE } }),
+      this.usersRepository.count({ where: { role: UserRole.MEDICAL } }),
+      this.usersRepository.count({ where: { role: UserRole.FIRE_DEPARTMENT } }),
+      this.usersRepository.count({ where: { role: UserRole.INSURANCE_AGENT } }),
       this.usersRepository.count({
-        where: { role: UserRole.VENDOR, is_active: true },
+        where: [
+          { role: UserRole.POLICE, is_active: true },
+          { role: UserRole.MEDICAL, is_active: true },
+          { role: UserRole.FIRE_DEPARTMENT, is_active: true },
+        ],
       }),
-      this.usersRepository.count({ where: { role: UserRole.CUSTOMER } }),
     ]);
 
-    const avgRating = await this.usersRepository
-      .createQueryBuilder('user')
-      .select('AVG(user.average_rating)', 'avg_rating')
-      .where('user.role = :role', { role: UserRole.VENDOR })
-      .getRawOne();
-
     return {
-      totalVendors,
-      activeVendors,
-      inactiveVendors: totalVendors - activeVendors,
-      totalCustomers,
-      averageVendorRating: parseFloat(avgRating.avg_rating) || 0,
+      totalUsers,
+      totalReporters,
+      emergencyResponders: {
+        police: totalPolice,
+        medical: totalMedical,
+        fireDepartment: totalFireDept,
+        activeResponders,
+      },
+      totalInsuranceAgents,
     };
+  }
+
+  // Find available emergency responders by type
+  async findAvailableRespondersByType(
+    responderType: UserRole,
+    latitude?: number,
+    longitude?: number,
+    radiusKm: number = 50,
+  ): Promise<Partial<User>[]> {
+    const validResponderTypes = [
+      UserRole.POLICE,
+      UserRole.MEDICAL,
+      UserRole.FIRE_DEPARTMENT,
+    ];
+
+    if (!validResponderTypes.includes(responderType)) {
+      throw new Error('Invalid responder type');
+    }
+
+    if (latitude && longitude) {
+      return this.findRespondersNearLocation(latitude, longitude, radiusKm);
+    }
+
+    return await this.usersRepository
+      .find({
+        where: {
+          role: responderType,
+          is_active: true,
+        },
+        order: {
+          created_at: 'DESC',
+        },
+      })
+      .then((users) => users.map((user) => this.sanitizeUser(user)))
+      .catch((error) => {
+        throw new Error(`Error finding responders: ${error.message}`);
+      });
   }
 }

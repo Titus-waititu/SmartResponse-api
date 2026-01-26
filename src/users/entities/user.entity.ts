@@ -1,10 +1,8 @@
-import { Booking } from 'src/bookings/entities/booking.entity';
-import { Fleet } from 'src/fleet/entities/fleet.entity';
-import { Review } from 'src/reviews/entities/review.entity';
-import { Service } from 'src/services/entities/service.entity';
-import { Notification } from 'src/notifications/entities/notification.entity';
-import { CarWashLocation } from 'src/car-wash-location/entities/car-wash-location.entity';
-import { ServiceProviderStatus, UserRole } from 'src/types';
+import { AccidentReport } from 'src/accident-reports/entities/accident-report.entity';
+import { Response } from 'src/responses/entities/response.entity';
+import { Media } from 'src/media/entities/media.entity';
+import { InsuranceClaim } from 'src/insurance-claims/entities/insurance-claim.entity';
+import { UserRole } from 'src/types';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -36,42 +34,44 @@ export class User {
   @Column({ nullable: true })
   image_url: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.CUSTOMER })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.REPORTER })
   role: UserRole;
 
-  // 📍 Location-based fields for discovery
+  // 📍 Location-based fields for emergency responders
   @Column({ nullable: true })
   address: string;
 
   @Column({ nullable: true })
   city: string;
 
-  @Column({
-    nullable: true,
-    type: 'enum',
-    enum: ServiceProviderStatus,
-    default: ServiceProviderStatus.ONLINE,
-  })
-  status: ServiceProviderStatus;
+  @Column({ nullable: true })
+  state: string;
 
   @Column({ nullable: true })
   postal_code: string;
 
-  // 🧼 Vendor-specific fields
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  latitude: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  longitude: number;
+
+  // Emergency responder specific fields
   @Column({ nullable: true })
-  business_name: string;
+  badge_number: string;
 
   @Column({ nullable: true })
-  business_license: string;
+  department_name: string;
 
-  @Column({ type: 'text', nullable: true })
-  business_description: string;
+  @Column({ nullable: true })
+  vehicle_number: string;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
-  service_radius_km: number;
+  // Insurance agent specific fields
+  @Column({ nullable: true })
+  insurance_company: string;
 
-  @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
-  commission_rate: number;
+  @Column({ nullable: true })
+  license_number: string;
 
   @Column({ default: true })
   is_active: boolean;
@@ -90,25 +90,18 @@ export class User {
   updated_at: Date;
 
   // 📦 Relations
-  @OneToMany(() => Booking, (booking) => booking.user)
-  bookings: Relation<Booking[]>;
+  @OneToMany(() => AccidentReport, (report) => report.reporter)
+  reported_accidents: Relation<AccidentReport[]>;
 
-  @OneToMany(() => Service, (service) => service.user)
-  services: Relation<Service[]>;
+  @OneToMany(() => Response, (response) => response.responder)
+  responses: Relation<Response[]>;
 
-  @OneToMany(() => Review, (review) => review.user)
-  reviews: Relation<Review[]>;
+  @OneToMany(() => Media, (media) => media.uploaded_by)
+  uploaded_media: Relation<Media[]>;
 
-  @OneToMany(() => Fleet, (fleet) => fleet.user)
-  fleetVehicles: Relation<Fleet[]>;
+  @OneToMany(() => InsuranceClaim, (claim) => claim.claimant)
+  insurance_claims: Relation<InsuranceClaim[]>;
 
-  @OneToMany(() => Notification, (notification) => notification.recipient)
-  notifications: Relation<Notification[]>;
-
-  // 🔗 Vendor’s primary location (optional)
-  @ManyToOne(() => CarWashLocation, (location) => location.vendors, {
-    nullable: true,
-    onDelete: 'SET NULL',
-  })
-  location: Relation<CarWashLocation>;
+  @OneToMany(() => InsuranceClaim, (claim) => claim.insurance_agent)
+  assigned_claims: Relation<InsuranceClaim[]>;
 }
