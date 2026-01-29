@@ -5,14 +5,18 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { DatabaseService } from '../database/database.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Like } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserResponse } from './entities/user.entity';
+import { User, UserResponse } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponse> {
     const { email, password, fullName, phoneNumber, role, isActive } =
@@ -28,16 +32,17 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const userId = crypto.randomUUID();
-    const active = isActive !== undefined ? isActive : true;
+    const user = this.usersRepository.create({
+      fullName,
+      email,
+      password: hashedPassword,
+      phoneNumber,
+      role,
+      isActive: isActive !== undefined ? isActive : true,
+    });
 
-    await this.databaseService['sql']`
-      INSERT INTO users (id, full_name, email, password, phone_number, role, is_active, created_at, updated_at)
-      VALUES (${userId}, ${fullName}, ${email}, ${hashedPassword}, ${phoneNumber || null}, ${role}, ${active}, NOW(), NOW())
-    `;
-
-    const user = await this.findOne(userId);
-    return user;
+    const savedUser = await this.usersRepository.save(user);
+    return this.mapToUserResponse(savedUser);
   }
 
   async findAll(params?: {
@@ -54,52 +59,56 @@ export class UsersService {
   }> {
     const page = params?.page || 1;
     const limit = params?.limit || 10;
-    const offset = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-    let whereConditions: string[] = [];
-    let queryParams: any[] = [];
+    const where: any = {};
 
-    // Build WHERE clause dynamically
     if (params?.role) {
-      whereConditions.push('role = $' + (queryParams.length + 1));
-      queryParams.push(params.role);
+      where.role = params.role;
     }
 
     if (params?.isActive !== undefined) {
-      whereConditions.push('is_active = $' + (queryParams.length + 1));
-      queryParams.push(params.isActive);
+      where.isActive = params.isActive;
     }
 
     if (params?.search) {
-      whereConditions.push(
-        '(full_name ILIKE $' +
-          (queryParams.length + 1) +
-          ' OR email ILIKE $' +
-          (queryParams.length + 1) +
-          ')',
+      // For search, we'll use a more complex query
+      const queryBuilder = this.usersRepository.createQueryBuilder('user');
+
+      queryBuilder.where(
+        '(user.fullName ILIKE :search OR user.email ILIKE :search)',
+        { search: `%${params.search}%` },
       );
-      queryParams.push(`%${params.search}%`);
+
+      if (params?.role) {
+        queryBuilder.andWhere('user.role = :role', { role: params.role });
+      }
+
+      if (params?.isActive !== undefined) {
+        queryBuilder.andWhere('user.isActive = :isActive', {
+          isActive: params.isActive,
+        });
+      }
+
+      queryBuilder.orderBy('user.createdAt', 'DESC').skip(skip).take(limit);
+
+      const [users, total] = await queryBuilder.getManyAndCount();
+
+      return {
+        users: users.map((user) => this.mapToUserResponse(user)),
+        total,
+        page,
+        limit,
+      };
     }
 
-    const whereClause =
-      whereConditions.length > 0
-        ? 'WHERE ' + whereConditions.join(' AND ')
-        : '';
-
-    // Get total count
-    const countResult = await this.databaseService['sql']`
-      SELECT COUNT(*) as total FROM users ${this.databaseService['sql'](whereClause)}
-    `;
-    const total = parseInt(countResult[0]?.total || '0');
-
-    // Get users with pagination
-    const users = await this.databaseService['sql']`
-      SELECT id, full_name, email, phone_number, role, is_active, created_at, updated_at
-      FROM users
-      ${this.databaseService['sql'](whereClause)}
-      ORDER BY created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `;
+    // Simple query without search
+    const [users, total] = await this.usersRepository.findAndCount({
+      where,
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
 
     return {
       users: users.map((user) => this.mapToUserResponse(user)),
@@ -110,24 +119,31 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<UserResponse> {
-    const result = await this.databaseService['sql']`
-      SELECT id, full_name, email, phone_number, role, is_active, created_at, updated_at
-      FROM users
-      WHERE id = ${id}
-    `;
+    const user = await this.usersRepository.findOne({ where: { id } });
 
-    if (!result || result.length === 0) {
+    if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    return this.mapToUserResponse(result[0]);
+    return this.mapToUserResponse(user);
   }
 
-  async findByEmail(email: string): Promise<any> {
-    const result = await this.databaseService['sql']`
-      SELECT * FROM users WHERE email = ${email}
-    `;
-    return result[0] || null;
+  async findByEmail(email: string): Promise<User | null> {
+    return await this.usersRepository.findOne({
+      where: { email },
+      select: [
+        'id',
+        'fullName',
+        'email',
+        'password',
+        'phoneNumber',
+        'role',
+        'isActive',
+        'hashedRefreshToken',
+        'createdAt',
+        'updatedAt',
+      ],
+    });
   }
 
   async update(
@@ -135,14 +151,9 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
   ): Promise<UserResponse> {
     // Check if user exists
-    await this.findOne(id);
-
-    const updates: string[] = [];
-    const values: any[] = [];
-
-    if (updateUserDto.fullName) {
-      updates.push('full_name = $' + (values.length + 1));
-      values.push(updateUserDto.fullName);
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
 
     if (updateUserDto.email) {
@@ -151,48 +162,26 @@ export class UsersService {
       if (existingUser && existingUser.id !== id) {
         throw new ConflictException('Email already in use');
       }
-      updates.push('email = $' + (values.length + 1));
-      values.push(updateUserDto.email);
     }
 
-    if (updateUserDto.phoneNumber !== undefined) {
-      updates.push('phone_number = $' + (values.length + 1));
-      values.push(updateUserDto.phoneNumber);
-    }
-
-    if (updateUserDto.role) {
-      updates.push('role = $' + (values.length + 1));
-      values.push(updateUserDto.role);
-    }
-
-    if (updateUserDto.isActive !== undefined) {
-      updates.push('is_active = $' + (values.length + 1));
-      values.push(updateUserDto.isActive);
-    }
-
-    if (updates.length === 0) {
+    if (Object.keys(updateUserDto).length === 0) {
       throw new BadRequestException('No fields to update');
     }
 
-    updates.push('updated_at = NOW()');
-    values.push(id);
+    // Update user
+    Object.assign(user, updateUserDto);
+    const updatedUser = await this.usersRepository.save(user);
 
-    await this.databaseService['sql']`
-      UPDATE users
-      SET ${this.databaseService['sql'](updates.join(', '))}
-      WHERE id = ${id}
-    `;
-
-    return this.findOne(id);
+    return this.mapToUserResponse(updatedUser);
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    // Check if user exists
-    await this.findOne(id);
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
 
-    await this.databaseService['sql']`
-      DELETE FROM users WHERE id = ${id}
-    `;
+    await this.usersRepository.remove(user);
 
     return { message: `User with ID ${id} has been removed` };
   }
@@ -206,25 +195,21 @@ export class UsersService {
   }
 
   async getUsersByRole(role: string): Promise<UserResponse[]> {
-    const result = await this.databaseService['sql']`
-      SELECT id, full_name, email, phone_number, role, is_active, created_at, updated_at
-      FROM users
-      WHERE role = ${role}
-      ORDER BY created_at DESC
-    `;
+    const users = await this.usersRepository.find({
+      where: { role },
+      order: { createdAt: 'DESC' },
+    });
 
-    return result.map((user) => this.mapToUserResponse(user));
+    return users.map((user) => this.mapToUserResponse(user));
   }
 
   async getActiveUsers(): Promise<UserResponse[]> {
-    const result = await this.databaseService['sql']`
-      SELECT id, full_name, email, phone_number, role, is_active, created_at, updated_at
-      FROM users
-      WHERE is_active = true
-      ORDER BY created_at DESC
-    `;
+    const users = await this.usersRepository.find({
+      where: { isActive: true },
+      order: { createdAt: 'DESC' },
+    });
 
-    return result.map((user) => this.mapToUserResponse(user));
+    return users.map((user) => this.mapToUserResponse(user));
   }
 
   async getUserStats(): Promise<{
@@ -233,23 +218,21 @@ export class UsersService {
     inactive: number;
     byRole: Record<string, number>;
   }> {
-    const totalResult = await this.databaseService['sql']`
-      SELECT COUNT(*) as count FROM users
-    `;
+    const total = await this.usersRepository.count();
+    const active = await this.usersRepository.count({
+      where: { isActive: true },
+    });
+    const inactive = await this.usersRepository.count({
+      where: { isActive: false },
+    });
 
-    const activeResult = await this.databaseService['sql']`
-      SELECT COUNT(*) as count FROM users WHERE is_active = true
-    `;
-
-    const inactiveResult = await this.databaseService['sql']`
-      SELECT COUNT(*) as count FROM users WHERE is_active = false
-    `;
-
-    const roleResult = await this.databaseService['sql']`
-      SELECT role, COUNT(*) as count
-      FROM users
-      GROUP BY role
-    `;
+    // Get count by role
+    const roleResult = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.role', 'role')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('user.role')
+      .getRawMany();
 
     const byRole: Record<string, number> = {};
     roleResult.forEach((row) => {
@@ -257,23 +240,23 @@ export class UsersService {
     });
 
     return {
-      total: parseInt(totalResult[0]?.count || '0'),
-      active: parseInt(activeResult[0]?.count || '0'),
-      inactive: parseInt(inactiveResult[0]?.count || '0'),
+      total,
+      active,
+      inactive,
       byRole,
     };
   }
 
-  private mapToUserResponse(user: any): UserResponse {
+  private mapToUserResponse(user: User): UserResponse {
     return {
       id: user.id,
-      fullName: user.full_name,
+      fullName: user.fullName,
       email: user.email,
-      phoneNumber: user.phone_number,
+      phoneNumber: user.phoneNumber,
       role: user.role,
-      isActive: user.is_active,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 }

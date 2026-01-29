@@ -5,9 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
-import { DatabaseModule } from '../database/database.module';
-import { DatabaseService } from '../database/database.service';
+import { RfStrategy } from './strategies/jwt-refresh.strategy';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -23,10 +22,10 @@ import { DatabaseService } from '../database/database.service';
       }),
       inject: [ConfigService],
     }),
-    DatabaseModule,
+    UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtRefreshStrategy, DatabaseService],
-  exports: [AuthService, JwtStrategy, JwtRefreshStrategy],
+  providers: [AuthService, JwtStrategy, RfStrategy],
+  exports: [AuthService, JwtStrategy, RfStrategy],
 })
 export class AuthModule {}

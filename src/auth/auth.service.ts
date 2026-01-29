@@ -14,10 +14,9 @@ import {
   ChangePasswordDto,
   ForgotPasswordDto,
   ResetPasswordDto,
-  UserRole,
 } from './dto/create-auth.dto';
 import { UpdateProfileDto } from './dto/update-auth.dto';
-import { User } from './entities/user.entity';
+import { User } from '../users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -44,7 +43,7 @@ export class AuthService {
   private async saveRefreshToken(userId: string, refreshToken: string) {
     const hashedRefreshToken = await this.hashData(refreshToken);
     await this.usersRepository.update(userId, {
-      refreshToken: hashedRefreshToken,
+      hashedRefreshToken: hashedRefreshToken,
     });
   }
 
@@ -89,6 +88,62 @@ export class AuthService {
     };
   }
 
+  async signUp(registerDto: RegisterDto) {
+    const { email, password, fullName, phoneNumber, role, username } =
+      registerDto;
+
+    // Check if user already exists
+    const existingUser = await this.usersRepository.findOne({
+      where: [{ email }, { username }],
+    });
+
+    if (existingUser) {
+      throw new ConflictException(
+        'User with this email or username already exists',
+      );
+    }
+
+    // Hash password
+    const hashedPassword = await this.hashData(password);
+
+    // Create user
+    const user = this.usersRepository.create({
+      fullName,
+      email,
+      username,
+      password: hashedPassword,
+      phoneNumber,
+      role: role || 'user',
+      isActive: true,
+    });
+
+    const savedUser = await this.usersRepository.save(user);
+
+    // Generate tokens
+    const tokens = await this.getTokens(
+      savedUser.id,
+      savedUser.email,
+      savedUser.role,
+      savedUser.username,
+    );
+
+    // Save refresh token
+    await this.saveRefreshToken(savedUser.id, tokens.refreshToken);
+
+    return {
+      success: true,
+      message: 'User registered successfully',
+      user: {
+        id: savedUser.id,
+        fullName: savedUser.fullName,
+        email: savedUser.email,
+        username: savedUser.username,
+        role: savedUser.role,
+      },
+      ...tokens,
+    };
+  }
+
   async signIn(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -101,7 +156,8 @@ export class AuthService {
         'fullName',
         'role',
         'isActive',
-        'refreshToken',
+        'hashedRefreshToken',
+        'username',
       ],
     });
 
@@ -153,10 +209,17 @@ export class AuthService {
   async refreshTokens(id: string, refreshToken: string) {
     const user = await this.usersRepository.findOne({
       where: { id },
-      select: ['id', 'email', 'fullName', 'role', 'refreshToken'],
+      select: [
+        'id',
+        'email',
+        'fullName',
+        'role',
+        'hashedRefreshToken',
+        'username',
+      ],
     });
 
-    if (!user || !user.refreshToken) {
+    if (!user || !user.hashedRefreshToken) {
       return {
         success: false,
         message: 'User not found or not logged in',
@@ -165,7 +228,7 @@ export class AuthService {
 
     const isRefreshTokenValid = await bcrypt.compare(
       refreshToken,
-      user.refreshToken,
+      user.hashedRefreshToken,
     );
     if (!isRefreshTokenValid) {
       return {
@@ -178,7 +241,7 @@ export class AuthService {
       user.id,
       user.email,
       user.role,
-      user.fullName,
+      user.username,
     );
     await this.saveRefreshToken(user.id, tokens.refreshToken);
     return {
@@ -191,17 +254,19 @@ export class AuthService {
   async logout(userId: string) {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
-      select: ['id', 'email', 'role', 'refreshToken'],
+      select: ['id', 'email', 'role', 'hashedRefreshToken'],
     });
 
-    if (!user || !user.refreshToken) {
+    if (!user || !user.hashedRefreshToken) {
       return {
         success: false,
         message: 'User not found or not logged in',
       };
     }
 
-    await this.usersRepository.update(userId, { refreshToken: undefined });
+    await this.usersRepository.update(userId, {
+      hashedRefreshToken: undefined,
+    });
     return {
       success: true,
       message: 'Logout successful',

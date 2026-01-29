@@ -27,6 +27,11 @@ export class RegisterDto {
   @IsNotEmpty()
   email: string;
 
+  @ApiProperty({ example: 'johndoe' })
+  @IsString()
+  @IsNotEmpty()
+  username: string;
+
   @ApiProperty({ example: 'Password123!' })
   @IsString()
   @IsNotEmpty()
