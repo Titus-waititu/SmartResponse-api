@@ -313,12 +313,12 @@ export class AuthService {
     );
   }
 
-  async verifyResetToken(token: string) {
+  async verifyResetToken(token: string): Promise<string> {
     try {
       const decoded = this.jwtService.verify(token, {
         secret: this.configService.getOrThrow<string>('JWT_RESET_TOKEN_SECRET'),
       }) as { email: string };
-      const decodedEmail = decoded.email;
+      const decodedEmail: string = decoded.email;
       const user = await this.usersRepository.findOne({
         where: { email: decodedEmail },
         select: ['id'],
@@ -350,7 +350,7 @@ export class AuthService {
       throw new NotFoundException(`User with email ${email} not found`);
     }
 
-    await this.generateResetToken(user.id, user.email);
+    this.generateResetToken(user.id, user.email);
     // TODO: Send email with reset token
     // await this.mailService.sendResetEmail(email, token);
     return 'Password reset email sent successfully';
