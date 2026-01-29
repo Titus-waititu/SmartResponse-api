@@ -20,7 +20,7 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponse> {
-    const { email, password, fullName, phoneNumber, role, isActive } =
+    const { email, password, fullName, username, phoneNumber, role, isActive } =
       createUserDto;
 
     // Check if user already exists
@@ -36,6 +36,7 @@ export class UsersService {
     const user = this.usersRepository.create({
       fullName,
       email,
+      username,
       password: hashedPassword,
       phoneNumber,
       role,

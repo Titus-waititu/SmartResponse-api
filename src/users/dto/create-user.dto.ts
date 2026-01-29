@@ -35,7 +35,7 @@ export class CreateUserDto {
 
   @ApiProperty({ example: '+1234567890', required: false })
   @IsOptional()
-  @IsPhoneNumber()
+  // @IsPhoneNumber('US')
   phoneNumber?: string;
 
   @ApiProperty({ enum: UserRole, default: UserRole.USER })

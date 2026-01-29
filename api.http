@@ -93,7 +93,7 @@ Content-Type: application/json
   "email": "jane.smith@example.com",
   "username": "janesmith",
   "password": "Password123!",
-  "phoneNumber": "+1234567892",
+  "phoneNumber": "+1234567792",
   "role": "officer",
   "isActive": true
 }
