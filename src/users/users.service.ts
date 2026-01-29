@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserResponse } from './entities/user.entity';
+import { UserRole } from '../auth/types';
 
 @Injectable()
 export class UsersService {
@@ -194,7 +195,7 @@ export class UsersService {
     return this.update(id, { isActive: true });
   }
 
-  async getUsersByRole(role: string): Promise<UserResponse[]> {
+  async getUsersByRole(role: UserRole): Promise<UserResponse[]> {
     const users = await this.usersRepository.find({
       where: { role },
       order: { createdAt: 'DESC' },

@@ -5,8 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Request } from 'express';
 import { User } from 'src/users/entities/user.entity';
-import { JWTPayload } from '../strategies/at.strategy';
-import { UserRole } from '../dto/create-auth.dto';
+import { JWTPayload, UserRole } from '../types';
 
 interface UserRequest extends Request {
   user?: JWTPayload;

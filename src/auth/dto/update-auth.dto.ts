@@ -6,7 +6,7 @@ import {
   IsEnum,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from './create-auth.dto';
+import { UserRole } from '../types';
 
 export class UpdateProfileDto {
   @ApiProperty({ example: 'John Doe', required: false })

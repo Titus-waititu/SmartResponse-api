@@ -65,7 +65,7 @@ export class UsersController {
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
   findAll(
-    @Query('role') role?: string,
+    @Query('role') role?: UserRole,
     @Query('isActive') isActive?: string,
     @Query('search') search?: string,
     @Query('page') page?: string,
@@ -106,7 +106,7 @@ export class UsersController {
   @Roles(UserRole.ADMIN, UserRole.OFFICER)
   @ApiOperation({ summary: 'Get users by role (Admin/Officer)' })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
-  getUsersByRole(@Param('role') role: string): Promise<UserResponse[]> {
+  getUsersByRole(@Param('role') role: UserRole): Promise<UserResponse[]> {
     return this.usersService.getUsersByRole(role);
   }
 

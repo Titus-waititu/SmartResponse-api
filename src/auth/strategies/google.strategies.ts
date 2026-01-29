@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Strategy, VerifyCallback } from 'passport-google-oauth2';
-import { UserRole } from '../dto/create-auth.dto';
+import { UserRole } from '../types';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {

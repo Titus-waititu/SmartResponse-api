@@ -6,6 +6,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { UserRole } from '../../auth/types';
 
 @Entity('users')
 export class User {
@@ -33,9 +34,13 @@ export class User {
   @Column({ name: 'phone_number', nullable: true })
   phoneNumber?: string;
 
-  @ApiProperty()
-  @Column({ default: 'user' })
-  role: string;
+  @ApiProperty({ enum: UserRole })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  role: UserRole;
+
+  @ApiProperty({ required: false })
+  @Column({ nullable: true })
+  image_url?: string;
 
   @ApiProperty()
   @Column({ name: 'is_active', default: true })
@@ -69,8 +74,11 @@ export class UserResponse {
   @ApiProperty({ required: false })
   phoneNumber?: string;
 
-  @ApiProperty()
-  role: string;
+  @ApiProperty({ enum: UserRole })
+  role: UserRole;
+
+  @ApiProperty({ required: false })
+  image_url?: string;
 
   @ApiProperty()
   isActive: boolean;

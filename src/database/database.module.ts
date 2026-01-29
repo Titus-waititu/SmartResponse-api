@@ -9,17 +9,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const databaseUrl = configService.get<string>('DATABASE_URL');
-        
-        // Parse the database URL and add sslmode=verify-full if it's missing
-        const urlWithSsl = databaseUrl?.includes('sslmode=')
-          ? databaseUrl
-          : databaseUrl
-            ? `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}sslmode=verify-full`
-            : undefined;
 
         return {
           type: 'postgres',
-          url: urlWithSsl,
+          url: databaseUrl,
           // host: configService.getOrThrow<string>('DATABASE_HOST', 'localhost'),
           // port: configService.getOrThrow<number>('DATABASE_PORT', 5432),
           // username: configService.getOrThrow<string>('DATABASE_USERNAME'),
@@ -29,7 +22,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
           synchronize: configService.getOrThrow<boolean>('TYPEORM_SYNC', true),
           logging: configService.getOrThrow<boolean>('TYPEORM_LOGGING', false),
           ssl: {
-            rejectUnauthorized: false,
+            rejectUnauthorized: true,
           },
         };
       },

@@ -19,6 +19,7 @@ import { UpdateProfileDto } from './dto/update-auth.dto';
 import { User } from '../users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UserRole } from './types';
 
 @Injectable()
 export class AuthService {
@@ -106,7 +107,7 @@ export class AuthService {
       username,
       password: hashedPassword,
       phoneNumber,
-      role: role || 'user',
+      role: role || UserRole.USER,
       isActive: true,
     });
 
