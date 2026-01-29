@@ -317,7 +317,7 @@ export class AuthService {
     try {
       const decoded = this.jwtService.verify(token, {
         secret: this.configService.getOrThrow<string>('JWT_RESET_TOKEN_SECRET'),
-      });
+      }) as { email: string };
       const decodedEmail = decoded.email;
       const user = await this.usersRepository.findOne({
         where: { email: decodedEmail },
@@ -327,8 +327,9 @@ export class AuthService {
         throw new NotFoundException('User not found');
       }
       return user.id;
-    } catch (error: any) {
-      return `Invalid or expired reset token: ${error.message as string}`;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return `Invalid or expired reset token: ${errorMessage}`;
     }
   }
 
@@ -355,7 +356,7 @@ export class AuthService {
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<string> {
-    const { newPassword, confirmPassword } = resetPasswordDto;
+    const { token, newPassword, confirmPassword } = resetPasswordDto;
 
     if (newPassword !== confirmPassword) {
       throw new NotFoundException('Passwords do not match');
