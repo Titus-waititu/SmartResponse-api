@@ -14,6 +14,7 @@ import { LocationsModule } from './locations/locations.module';
 import { ReportsModule } from './reports/reports.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { EmergencyServicesModule } from './emergency-services/emergency-services.module';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { EmergencyServicesModule } from './emergency-services/emergency-services
     ReportsModule,
     NotificationsModule,
     EmergencyServicesModule,
+    DatabaseModule,
   ],
   controllers: [AppController],
   providers: [
