@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -15,6 +15,7 @@ import { ReportsModule } from './reports/reports.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { EmergencyServicesModule } from './emergency-services/emergency-services.module';
 import { DatabaseModule } from './database/database.module';
+import { LoggerMiddleware } from 'logger.middleware';
 
 @Module({
   imports: [
@@ -22,24 +23,7 @@ import { DatabaseModule } from './database/database.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DATABASE_HOST'),
-        port: configService.get('DATABASE_PORT'),
-        username: configService.get('DATABASE_USERNAME'),
-        password: configService.get('DATABASE_PASSWORD'),
-        database: configService.get('DATABASE_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') !== 'production',
-        ssl:
-          configService.get('NODE_ENV') === 'production'
-            ? { rejectUnauthorized: false }
-            : false,
-      }),
-      inject: [ConfigService],
-    }),
+    DatabaseModule,
     AuthModule,
     UsersModule,
     AccidentsModule,
@@ -49,7 +33,6 @@ import { DatabaseModule } from './database/database.module';
     ReportsModule,
     NotificationsModule,
     EmergencyServicesModule,
-    DatabaseModule,
   ],
   controllers: [AppController],
   providers: [
@@ -60,4 +43,8 @@ import { DatabaseModule } from './database/database.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+  consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}
