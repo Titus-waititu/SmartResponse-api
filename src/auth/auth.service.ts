@@ -328,7 +328,8 @@ export class AuthService {
       }
       return user.id;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       return `Invalid or expired reset token: ${errorMessage}`;
     }
   }
@@ -349,7 +350,7 @@ export class AuthService {
       throw new NotFoundException(`User with email ${email} not found`);
     }
 
-    const token = await this.generateResetToken(user.id, user.email);
+    await this.generateResetToken(user.id, user.email);
     // TODO: Send email with reset token
     // await this.mailService.sendResetEmail(email, token);
     return 'Password reset email sent successfully';

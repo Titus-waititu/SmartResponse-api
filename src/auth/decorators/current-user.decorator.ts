@@ -5,7 +5,7 @@ interface RequestWithUser {
 }
 
 export const CurrentUser = createParamDecorator(
-  (data: string | undefined, ctx: ExecutionContext) => {
+  (data: string | undefined, ctx: ExecutionContext): any => {
     const request = ctx.switchToHttp().getRequest<RequestWithUser>();
     if (!data) return request.user;
     return request.user?.[data];
