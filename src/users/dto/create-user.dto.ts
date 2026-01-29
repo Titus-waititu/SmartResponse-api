@@ -22,6 +22,11 @@ export class CreateUserDto {
   @IsNotEmpty()
   email: string;
 
+  @ApiProperty({ example: 'johndoe' })
+  @IsString()
+  @IsNotEmpty()
+  username: string;
+
   @ApiProperty({ example: 'Password123!' })
   @IsString()
   @IsNotEmpty()
@@ -34,9 +39,9 @@ export class CreateUserDto {
   phoneNumber?: string;
 
   @ApiProperty({ enum: UserRole, default: UserRole.USER })
+  @IsOptional()
   @IsEnum(UserRole)
-  @IsNotEmpty()
-  role: UserRole;
+  role?: UserRole;
 
   @ApiProperty({ default: true })
   @IsOptional()
