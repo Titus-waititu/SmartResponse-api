@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  Logger,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,6 +18,8 @@ interface UserRequest extends Request {
 
 @Injectable()
 export class RolesGuard implements CanActivate {
+  private readonly logger = new Logger(RolesGuard.name);
+
   constructor(
     private reflector: Reflector,
     @InjectRepository(User)
@@ -32,16 +39,29 @@ export class RolesGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
+      this.logger.warn('No user found in request');
       return false;
     }
 
-    const userRole = context.switchToHttp().getRequest<UserRequest>()
-      .user?.role;
+    const userRole = user.role;
+
+    this.logger.debug(`User role: ${userRole} (Type: ${typeof userRole})`);
+    this.logger.debug(`Required roles: ${JSON.stringify(requiredRoles)}`);
 
     if (!userRole) {
+      this.logger.warn('No role found in user object');
       return false;
     }
 
-    return requiredRoles.some((role) => userRole === role);
+    const hasRole = requiredRoles.some((role) => {
+      this.logger.debug(
+        `Comparing: "${userRole}" === "${role}" : ${userRole === role}`,
+      );
+      return userRole === role;
+    });
+
+    this.logger.debug(`Has required role: ${hasRole}`);
+
+    return hasRole;
   }
 }
