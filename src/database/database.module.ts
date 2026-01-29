@@ -8,9 +8,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
+        const databaseUrl = configService.get<string>('DATABASE_URL');
+        
+        // Parse the database URL and add sslmode=verify-full if it's missing
+        const urlWithSsl = databaseUrl?.includes('sslmode=')
+          ? databaseUrl
+          : databaseUrl
+            ? `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}sslmode=verify-full`
+            : undefined;
+
         return {
           type: 'postgres',
-          url: configService.get<string>('DATABASE_URL'),
+          url: urlWithSsl,
           // host: configService.getOrThrow<string>('DATABASE_HOST', 'localhost'),
           // port: configService.getOrThrow<number>('DATABASE_PORT', 5432),
           // username: configService.getOrThrow<string>('DATABASE_USERNAME'),
