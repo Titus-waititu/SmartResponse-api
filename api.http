@@ -1,4 +1,4 @@
-@baseUrl = http://localhost:3000
+@baseUrl = http://localhost:8080
 @accessToken = your-access-token-here
 @refreshToken = your-refresh-token-here
 @userId = your-user-id-here
@@ -7,19 +7,6 @@
 ### ==============================================
 ### AUTH ENDPOINTS
 ### ==============================================
-
-### Register new user
-POST {{baseUrl}}/auth/signup
-Content-Type: application/json
-
-{
-  "fullName": "John Doe",
-  "email": "john.doe@example.com",
-  "username": "johndoe",
-  "password": "Password123!",
-  "phoneNumber": "+1234567890",
-  "role": "user"
-}
 
 ### Sign in
 POST {{baseUrl}}/auth/signin
@@ -84,7 +71,20 @@ Authorization: Bearer {{accessToken}}
 ### USERS ENDPOINTS
 ### ==============================================
 
-### Create user
+### Register/Create new user
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "email": "john.doe@example.com",
+  "username": "johndoe",
+  "password": "Password123!",
+  "phoneNumber": "+1234567890",
+  "isActive": true
+}
+
+### Create user (Admin)
 POST {{baseUrl}}/users
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
@@ -92,6 +92,7 @@ Content-Type: application/json
 {
   "fullName": "Jane Smith",
   "email": "jane.smith@example.com",
+  "username": "janesmith",
   "password": "Password123!",
   "phoneNumber": "+1234567892",
   "role": "officer",
