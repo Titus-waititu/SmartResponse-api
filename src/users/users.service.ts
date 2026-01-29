@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserResponse } from './entities/user.entity';
@@ -61,7 +61,7 @@ export class UsersService {
     const limit = params?.limit || 10;
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Record<string, any> = {};
 
     if (params?.role) {
       where.role = params.role;
@@ -235,8 +235,8 @@ export class UsersService {
       .getRawMany();
 
     const byRole: Record<string, number> = {};
-    roleResult.forEach((row) => {
-      byRole[row.role] = parseInt(row.count);
+    roleResult.forEach((row: { role: string; count: string }) => {
+      byRole[row.role] = parseInt(row.count, 10);
     });
 
     return {
