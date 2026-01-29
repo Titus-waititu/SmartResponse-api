@@ -8,7 +8,6 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { DatabaseService } from '../database/database.service';
 import {
   RegisterDto,
   LoginDto,
@@ -19,108 +18,149 @@ import {
 } from './dto/create-auth.dto';
 import { UpdateProfileDto } from './dto/update-auth.dto';
 import { User } from './entities/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
-interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-  };
-}
+// interface JwtPayload {
+//   sub: string;
+//   email: string;
+//   role: string;
+//   username: string;
+// }
 
 @Injectable()
 export class AuthService {
   constructor(
-    private databaseService: DatabaseService,
+    @InjectRepository(User) private usersRepository: Repository<User>,
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
 
-  async signUp(registerDto: RegisterDto): Promise<TokenResponse> {
-    const { email, password, fullName, phoneNumber, role } = registerDto;
+  private async hashData(data: string): Promise<string> {
+    const salt = await bcrypt.genSalt(10);
+    return await bcrypt.hash(data, salt);
+  }
 
-    // Check if user already exists
-    const existingUser = await this.findByEmail(email);
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
-    }
+  private async saveRefreshToken(userId: string, refreshToken: string) {
+    const hashedRefreshToken = await this.hashData(refreshToken);
+    await this.usersRepository.update(userId, {
+      refreshToken: hashedRefreshToken,
+    });
+  }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user in database
-    const userId = crypto.randomUUID();
-    const userRole = role || UserRole.USER;
-
-    await this.databaseService['sql']`
-      INSERT INTO users (id, full_name, email, password, phone_number, role, is_active, created_at, updated_at)
-      VALUES (${userId}, ${fullName}, ${email}, ${hashedPassword}, ${phoneNumber || null}, ${userRole}, true, NOW(), NOW())
-    `;
-
-    // Generate tokens
-    const tokens = await this.generateTokens(userId, email, userRole);
-
-    // Save refresh token
-    await this.updateRefreshToken(userId, tokens.refreshToken);
-
+  async getTokens(id: string, email: string, role: string, username: string) {
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync(
+        {
+          sub: id,
+          email: email,
+          role: role,
+          username: username,
+        },
+        {
+          secret: this.configService.getOrThrow<string>(
+            'JWT_ACCESS_TOKEN_SECRET',
+          ),
+          expiresIn: this.configService.getOrThrow(
+            'JWT_ACCESS_TOKEN_EXPIRATION_TIME',
+          ),
+        },
+      ),
+      this.jwtService.signAsync(
+        {
+          sub: id,
+          email: email,
+          role: role,
+          username: username,
+        },
+        {
+          secret: this.configService.getOrThrow<string>(
+            'JWT_REFRESH_TOKEN_SECRET',
+          ),
+          expiresIn: this.configService.getOrThrow(
+            'JWT_REFRESH_TOKEN_EXPIRATION_TIME',
+          ),
+        },
+      ),
+    ]);
     return {
-      ...tokens,
-      user: {
-        id: userId,
-        email,
-        fullName,
-        role: userRole,
-      },
+      accessToken: at,
+      refreshToken: rt,
     };
   }
 
-  async signIn(loginDto: LoginDto): Promise<TokenResponse> {
+  async signIn(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
-    // Find user by email
-    const user = await this.findByEmail(email);
+    const user = await this.usersRepository.findOne({
+      where: { email },
+      select: [
+        'id',
+        'email',
+        'password',
+        'fullName',
+        'role',
+        'isActive',
+        'refreshToken',
+      ],
+    });
+
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      return {
+        success: false,
+        message: 'Invalid credentials',
+      };
     }
 
-    // Verify password
+    if (user.isActive === false) {
+      return {
+        success: false,
+        message: 'Account is inactive. Please contact support.',
+      };
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      return {
+        success: false,
+        message: 'Invalid credentials',
+      };
     }
 
-    // Check if user is active
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
-    }
-
-    // Generate tokens
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
-
-    // Save refresh token
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
-
+    const tokens = await this.getTokens(
+      user.id,
+      user.email,
+      user.role,
+      user.fullName,
+    );
+    await this.saveRefreshToken(user.id, tokens.refreshToken);
     return {
-      ...tokens,
+      success: true,
+      message: 'Login successful',
       user: {
         id: user.id,
         email: user.email,
         fullName: user.fullName,
         role: user.role,
+        isActive: user.isActive,
+      },
+      tokens: {
+        ...tokens,
       },
     };
   }
 
-  async refreshTokens(
-    userId: string,
-    refreshToken: string,
-  ): Promise<Omit<TokenResponse, 'user'>> {
-    const user = await this.validateUserById(userId);
+  async refreshTokens(id: string, refreshToken: string) {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      select: ['id', 'email', 'fullName', 'role', 'refreshToken'],
+    });
+
     if (!user || !user.refreshToken) {
-      throw new UnauthorizedException('Access denied');
+      return {
+        success: false,
+        message: 'User not found or not logged in',
+      };
     }
 
     const isRefreshTokenValid = await bcrypt.compare(
@@ -128,27 +168,58 @@ export class AuthService {
       user.refreshToken,
     );
     if (!isRefreshTokenValid) {
-      throw new UnauthorizedException('Invalid refresh token');
+      return {
+        success: false,
+        message: 'Invalid refresh token',
+      };
     }
 
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
-
-    return tokens;
+    const tokens = await this.getTokens(
+      user.id,
+      user.email,
+      user.role,
+      user.fullName,
+    );
+    await this.saveRefreshToken(user.id, tokens.refreshToken);
+    return {
+      success: true,
+      message: 'Tokens refreshed successfully',
+      ...tokens,
+    };
   }
 
-  async changePassword(
-    userId: string,
-    changePasswordDto: ChangePasswordDto,
-  ): Promise<{ message: string }> {
+  async logout(userId: string) {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'email', 'role', 'refreshToken'],
+    });
+
+    if (!user || !user.refreshToken) {
+      return {
+        success: false,
+        message: 'User not found or not logged in',
+      };
+    }
+
+    await this.usersRepository.update(userId, { refreshToken: undefined });
+    return {
+      success: true,
+      message: 'Logout successful',
+    };
+  }
+
+  async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
     const { currentPassword, newPassword } = changePasswordDto;
 
-    const user = await this.validateUserById(userId);
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'password'],
+    });
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    // Verify current password
     const isPasswordValid = await bcrypt.compare(
       currentPassword,
       user.password,
@@ -157,209 +228,161 @@ export class AuthService {
       throw new UnauthorizedException('Current password is incorrect');
     }
 
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update password
-    await this.databaseService['sql']`
-      UPDATE users
-      SET password = ${hashedPassword}, updated_at = NOW()
-      WHERE id = ${userId}
-    `;
-
-    return { message: 'Password changed successfully' };
-  }
-
-  async forgotPassword(
-    forgotPasswordDto: ForgotPasswordDto,
-  ): Promise<{ message: string }> {
-    const { email } = forgotPasswordDto;
-
-    const user = await this.findByEmail(email);
-    if (!user) {
-      // Don't reveal if user exists
-      return {
-        message: 'If an account exists, a password reset link has been sent',
-      };
-    }
-
-    // Generate reset token
-    const resetToken = crypto.randomUUID();
-    const hashedToken = await bcrypt.hash(resetToken, 10);
-    const expiresAt = new Date(Date.now() + 3600000); // 1 hour
-
-    // Save reset token
-    await this.databaseService['sql']`
-      UPDATE users
-      SET reset_password_token = ${hashedToken}, reset_password_expires = ${expiresAt}, updated_at = NOW()
-      WHERE id = ${user.id}
-    `;
-
-    // TODO: Send email with reset token
-    // For now, return the token (in production, send via email)
-    console.log('Reset token:', resetToken);
+    await this.updateUserPassword(userId, newPassword);
 
     return {
-      message: 'If an account exists, a password reset link has been sent',
+      success: true,
+      message: 'Password changed successfully',
     };
   }
 
-  async resetPassword(
-    resetPasswordDto: ResetPasswordDto,
-  ): Promise<{ message: string }> {
-    const { token, newPassword } = resetPasswordDto;
+  generateResetToken(userId: string, email: string) {
+    return this.jwtService.sign(
+      { userId, email },
+      {
+        secret: this.configService.getOrThrow<string>('JWT_RESET_TOKEN_SECRET'),
+        expiresIn: this.configService.getOrThrow(
+          'JWT_RESET_TOKEN_EXPIRATION_TIME',
+        ),
+      },
+    );
+  }
 
-    // Find user with valid reset token
-    const users = await this.databaseService['sql']`
-      SELECT * FROM users
-      WHERE reset_password_token IS NOT NULL
-      AND reset_password_expires > NOW()
-    `;
+  async verifyResetToken(token: string) {
+    try {
+      const decoded = this.jwtService.verify(token, {
+        secret: this.configService.getOrThrow<string>('JWT_RESET_TOKEN_SECRET'),
+      });
+      const decodedEmail = decoded.email;
+      const user = await this.usersRepository.findOne({
+        where: { email: decodedEmail },
+        select: ['id'],
+      });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return user.id;
+    } catch (error) {
+      return `Invalid or expired reset token: ${error.message}`;
+    }
+  }
 
-    let validUser: User | null = null;
-    for (const user of users) {
-      const isTokenValid = await bcrypt.compare(
-        token,
-        user.reset_password_token,
-      );
-      if (isTokenValid) {
-        validUser = user;
-        break;
+  async updateUserPassword(userId: string, newPassword: string) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.usersRepository.update(userId, { password: hashedPassword });
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<string> {
+    const { email } = forgotPasswordDto;
+    const user = await this.usersRepository.findOne({
+      where: { email },
+      select: ['email', 'id'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    const token = await this.generateResetToken(user.id, user.email);
+    // TODO: Send email with reset token
+    // await this.mailService.sendResetEmail(email, token);
+    return 'Password reset email sent successfully';
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<string> {
+    const { token, newPassword, confirmPassword } = resetPasswordDto;
+
+    if (newPassword !== confirmPassword) {
+      throw new NotFoundException('Passwords do not match');
+    }
+
+    const userId = await this.verifyResetToken(token);
+    if (!userId) {
+      throw new NotFoundException('Invalid or expired reset token');
+    }
+
+    // Get user email for confirmation email
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['email'],
+    });
+
+    await this.updateUserPassword(userId, newPassword);
+
+    // Send confirmation email
+    if (user?.email) {
+      try {
+        // TODO: Send password reset success email
+        // await this.mailService.sendPasswordResetSuccessEmail(user.email);
+      } catch (error) {
+        console.error(
+          'Failed to send password reset confirmation email:',
+          error,
+        );
       }
     }
 
-    if (!validUser) {
-      throw new BadRequestException('Invalid or expired reset token');
-    }
-
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update password and clear reset token
-    await this.databaseService['sql']`
-      UPDATE users
-      SET password = ${hashedPassword}, 
-          reset_password_token = NULL, 
-          reset_password_expires = NULL,
-          updated_at = NOW()
-      WHERE id = ${validUser.id}
-    `;
-
-    return { message: 'Password reset successfully' };
+    return 'Password has been reset successfully';
   }
 
-  async logout(userId: string): Promise<{ message: string }> {
-    await this.databaseService['sql']`
-      UPDATE users
-      SET refresh_token = NULL, updated_at = NOW()
-      WHERE id = ${userId}
-    `;
+  async getProfile(userId: string) {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: [
+        'id',
+        'fullName',
+        'email',
+        'role',
+        'phoneNumber',
+        'isActive',
+        'createdAt',
+        'updatedAt',
+      ],
+    });
 
-    return { message: 'Logged out successfully' };
-  }
-
-  async getProfile(
-    userId: string,
-  ): Promise<Omit<User, 'password' | 'refreshToken' | 'resetPasswordToken'>> {
-    const user = await this.validateUserById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const { password, refreshToken, resetPasswordToken, ...profile } = user;
-    return profile;
+    return {
+      success: true,
+      user,
+    };
   }
 
-  async updateProfile(
-    userId: string,
-    updateProfileDto: UpdateProfileDto,
-  ): Promise<{ message: string }> {
-    const updates: string[] = [];
-    const values: any[] = [];
-
-    if (updateProfileDto.fullName) {
-      updates.push('full_name = $' + (values.length + 1));
-      values.push(updateProfileDto.fullName);
-    }
+  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
     if (updateProfileDto.email) {
-      // Check if email is already taken
-      const existingUser = await this.findByEmail(updateProfileDto.email);
+      const existingUser = await this.usersRepository.findOne({
+        where: { email: updateProfileDto.email },
+        select: ['id'],
+      });
       if (existingUser && existingUser.id !== userId) {
         throw new ConflictException('Email already in use');
       }
-      updates.push('email = $' + (values.length + 1));
-      values.push(updateProfileDto.email);
-    }
-    if (updateProfileDto.phoneNumber) {
-      updates.push('phone_number = $' + (values.length + 1));
-      values.push(updateProfileDto.phoneNumber);
     }
 
-    if (updates.length === 0) {
+    const hasChanges =
+      updateProfileDto.fullName ||
+      updateProfileDto.email ||
+      updateProfileDto.phoneNumber;
+
+    if (!hasChanges) {
       throw new BadRequestException('No fields to update');
     }
 
-    updates.push('updated_at = NOW()');
-    values.push(userId);
+    await this.usersRepository.update(userId, updateProfileDto);
 
-    await this.databaseService['sql']`
-      UPDATE users
-      SET ${this.databaseService['sql'](updates.join(', '))}
-      WHERE id = ${userId}
-    `;
-
-    return { message: 'Profile updated successfully' };
+    return {
+      success: true,
+      message: 'Profile updated successfully',
+    };
   }
 
-  // Helper methods
-  async validateUserById(userId: string): Promise<User | null> {
-    const result = await this.databaseService['sql']`
-      SELECT * FROM users WHERE id = ${userId}
-    `;
-    return result[0] || null;
-  }
-
-  private async findByEmail(email: string): Promise<User | null> {
-    const result = await this.databaseService['sql']`
-      SELECT * FROM users WHERE email = ${email}
-    `;
-    return result[0] || null;
-  }
-
-  private async generateTokens(userId: string, email: string, role: string) {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(
-        { sub: userId, email, role },
-        {
-          secret:
-            this.configService.get<string>('JWT_SECRET') || 'your-secret-key',
-          expiresIn: this.configService.get<string>('JWT_EXPIRATION') || '15m',
-        },
-      ),
-      this.jwtService.signAsync(
-        { sub: userId, email, role },
-        {
-          secret:
-            this.configService.get<string>('JWT_REFRESH_SECRET') ||
-            'your-refresh-secret-key',
-          expiresIn:
-            this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d',
-        },
-      ),
-    ]);
-
-    return { accessToken, refreshToken };
-  }
-
-  private async updateRefreshToken(
-    userId: string,
-    refreshToken: string,
-  ): Promise<void> {
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-    await this.databaseService['sql']`
-      UPDATE users
-      SET refresh_token = ${hashedRefreshToken}, updated_at = NOW()
-      WHERE id = ${userId}
-    `;
+  async getUserById(userId: string) {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'fullName', 'email', 'role'],
+    });
+    return user;
   }
 }

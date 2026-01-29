@@ -1,40 +1,45 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
+import { ExtractJwt, Strategy, StrategyOptionsWithRequest } from 'passport-jwt';
 import { Request } from 'express';
-import { AuthService } from '../auth.service';
+import { ConfigService } from '@nestjs/config';
+
+interface JwtPayload {
+  sub: string;
+  email: string;
+  [key: string]: any;
+}
+
+interface JwtPayloadWithRt extends JwtPayload {
+  refreshToken: string;
+}
 
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(
-  Strategy,
-  'jwt-refresh',
-) {
-  constructor(
-    private configService: ConfigService,
-    private authService: AuthService,
-  ) {
-    super({
+export class RfStrategy extends PassportStrategy(Strategy, 'jwt-rt') {
+  constructor(private readonly configService: ConfigService) {
+    const options: StrategyOptionsWithRequest = {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('JWT_REFRESH_SECRET') ||
-        'your-refresh-secret-key',
-      passReqToCallback: true,
-    });
+      secretOrKey: configService.getOrThrow('JWT_REFRESH_TOKEN_SECRET'),
+      passReqToCallback: true, // what allows us to access the request object in the validate method
+    };
+    super(options);
+    console.log('RfStrategy constructor completed');
   }
 
-  async validate(req: Request, payload: any) {
-    const refreshToken = req.get('Authorization')?.replace('Bearer', '').trim();
+  validate(req: Request, payload: JwtPayload): JwtPayloadWithRt {
+    const authHeader = req.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No refresh token provided');
+    }
+    const refreshToken = authHeader.replace('Bearer ', '').trim();
     if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token not found');
+      throw new Error('Invalid refresh token format');
     }
-
-    const user = await this.authService.validateUserById(payload.sub);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return { userId: payload.sub, email: payload.email, refreshToken };
+    return {
+      ...payload, // attach request.user = payload;
+      refreshToken,
+    };
   }
 }
+// This strategy extracts the refresh token from the Authorization header, validates it, and attaches the payload to the request.
+// The validate method also extracts the refresh token from the request and includes it in the returned payload, which can be used later in the application.
