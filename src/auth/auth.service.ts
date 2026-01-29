@@ -20,13 +20,6 @@ import { User } from '../users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-// interface JwtPayload {
-//   sub: string;
-//   email: string;
-//   role: string;
-//   username: string;
-// }
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -117,7 +110,7 @@ export class AuthService {
       isActive: true,
     });
 
-    const savedUser = await this.usersRepository.save(user);
+    const savedUser: User = await this.usersRepository.save(user);
 
     // Generate tokens
     const tokens = await this.getTokens(
@@ -317,7 +310,7 @@ export class AuthService {
     try {
       const decoded = this.jwtService.verify(token, {
         secret: this.configService.getOrThrow<string>('JWT_RESET_TOKEN_SECRET'),
-      }) as { email: string };
+      });
       const decodedEmail: string = decoded.email;
       const user = await this.usersRepository.findOne({
         where: { email: decodedEmail },

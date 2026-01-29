@@ -16,8 +16,8 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Post()
-  create(@Body() createReportDto: CreateReportDto) {
-    return this.reportsService.create(createReportDto);
+  create(@Body() _createReportDto: CreateReportDto) {
+    return this.reportsService.create();
   }
 
   @Get()
@@ -27,16 +27,16 @@ export class ReportsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.reportsService.findOne(+id);
+    return this.reportsService.findOne(Number(id));
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReportDto: UpdateReportDto) {
-    return this.reportsService.update(+id, updateReportDto);
+  update(@Param('id') id: string, @Body() _updateReportDto: UpdateReportDto) {
+    return this.reportsService.update(Number(id));
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.reportsService.remove(+id);
+    return this.reportsService.remove(Number(id));
   }
 }

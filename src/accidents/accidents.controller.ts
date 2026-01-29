@@ -27,7 +27,7 @@ export class AccidentsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.accidentsService.findOne(+id);
+    return this.accidentsService.findOne(id);
   }
 
   @Patch(':id')
@@ -35,11 +35,11 @@ export class AccidentsController {
     @Param('id') id: string,
     @Body() updateAccidentDto: UpdateAccidentDto,
   ) {
-    return this.accidentsService.update(+id, updateAccidentDto);
+    return this.accidentsService.update(id, updateAccidentDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.accidentsService.remove(+id);
+    return this.accidentsService.remove(id);
   }
 }

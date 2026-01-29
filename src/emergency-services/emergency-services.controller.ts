@@ -29,7 +29,7 @@ export class EmergencyServicesController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.emergencyServicesService.findOne(+id);
+    return this.emergencyServicesService.findOne(id);
   }
 
   @Patch(':id')
@@ -37,11 +37,11 @@ export class EmergencyServicesController {
     @Param('id') id: string,
     @Body() updateEmergencyServiceDto: UpdateEmergencyServiceDto,
   ) {
-    return this.emergencyServicesService.update(+id, updateEmergencyServiceDto);
+    return this.emergencyServicesService.update(id, updateEmergencyServiceDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.emergencyServicesService.remove(+id);
+    return this.emergencyServicesService.remove(id);
   }
 }
