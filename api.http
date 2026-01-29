@@ -1,4 +1,4 @@
-@baseUrl = http://localhost:8080
+@baseUrl = http://localhost:8080/api/v1
 @accessToken = your-access-token-here
 @refreshToken = your-refresh-token-here
 @userId = your-user-id-here
@@ -86,7 +86,6 @@ Content-Type: application/json
 
 ### Create user (Admin)
 POST {{baseUrl}}/users
-Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {

@@ -27,6 +27,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/dto/create-auth.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('Users Management')
 @Controller('users')
@@ -36,19 +37,15 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Public()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new user (Admin only)' })
+  @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
     status: 201,
-    description: 'User created successfully',
+    description: 'User registered successfully',
     type: UserResponse,
   })
   @ApiResponse({ status: 409, description: 'User already exists' })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - Admin access required',
-  })
   create(@Body() createUserDto: CreateUserDto): Promise<UserResponse> {
     return this.usersService.create(createUserDto);
   }
