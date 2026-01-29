@@ -26,7 +26,7 @@ import { UserResponse } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../auth/dto/create-auth.dto';
+import { UserRole } from '../auth/types';
 import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('Users Management')

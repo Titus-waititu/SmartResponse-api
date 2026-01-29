@@ -1,7 +1,9 @@
+import { UserRole } from "./user-role.type";
+
 export interface JwtPayload {
   sub: string;
   email: string;
-  role?: string;
+  role?: UserRole;
   username?: string;
   [key: string]: any;
 }
@@ -13,6 +15,6 @@ export interface JwtPayloadWithRt extends JwtPayload {
 export type JWTPayload = {
   sub: string;
   email: string;
-  role: string;
+  role: UserRole;
   username: string;
 };

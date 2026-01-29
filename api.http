@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:8080/api/v1
-@accessToken = your-access-token-here
-@refreshToken = your-refresh-token-here
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMzNhZDlhZS0wZDJlLTQxYmEtODhmYy1iZDhlYWViZjg5Y2MiLCJlbWFpbCI6ImphbmUuc21pdGhAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6IkphbmUgU21pdGgiLCJpYXQiOjE3Njk3MDUyNzEsImV4cCI6MTc3MDU2OTI3MX0.SIEUPSrS6UOjhLnsGt9xChYBXNIr8StyI08zDsDcNmM
+@refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMzNhZDlhZS0wZDJlLTQxYmEtODhmYy1iZDhlYWViZjg5Y2MiLCJlbWFpbCI6ImphbmUuc21pdGhAZXhhbXBsZS5jb20iLCJyb2xlIjoib2ZmaWNlciIsInVzZXJuYW1lIjoiSmFuZSBTbWl0aCIsImlhdCI6MTc2OTcwNDg5MSwiZXhwIjoxNzcwNTY4ODkxfQ.rc5DyGMX11pc4ha2tAtvuyU2itFLX-DQlfXtXIDweeE
 @userId = your-user-id-here
 @accidentId = your-accident-id-here
 
@@ -13,7 +13,7 @@ POST {{baseUrl}}/auth/signin
 Content-Type: application/json
 
 {
-  "email": "john.doe@example.com",
+  "email": "jane.smith@example.com",
   "password": "Password123!"
 }
 
