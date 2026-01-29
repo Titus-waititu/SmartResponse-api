@@ -250,6 +250,7 @@ export class UsersService {
   private mapToUserResponse(user: User): UserResponse {
     return {
       id: user.id,
+      username: user.username,
       fullName: user.fullName,
       email: user.email,
       phoneNumber: user.phoneNumber,

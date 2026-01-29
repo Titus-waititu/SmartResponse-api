@@ -1,0 +1,565 @@
+@baseUrl = http://localhost:3000
+@accessToken = your-access-token-here
+@refreshToken = your-refresh-token-here
+@userId = your-user-id-here
+@accidentId = your-accident-id-here
+
+### ==============================================
+### AUTH ENDPOINTS
+### ==============================================
+
+### Register new user
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "email": "john.doe@example.com",
+  "username": "johndoe",
+  "password": "Password123!",
+  "phoneNumber": "+1234567890",
+  "role": "user"
+}
+
+### Sign in
+POST {{baseUrl}}/auth/signin
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "Password123!"
+}
+
+### Refresh tokens
+POST {{baseUrl}}/auth/refresh
+Authorization: Bearer {{refreshToken}}
+Content-Type: application/json
+
+### Get profile
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{accessToken}}
+
+### Update profile
+PATCH {{baseUrl}}/auth/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "fullName": "John Doe Updated",
+  "phoneNumber": "+1234567891"
+}
+
+### Change password
+PATCH {{baseUrl}}/auth/change-password
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Password123!",
+  "newPassword": "NewPassword123!"
+}
+
+### Forgot password
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com"
+}
+
+### Reset password
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "reset-token-here",
+  "newPassword": "NewPassword123!"
+}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### USERS ENDPOINTS
+### ==============================================
+
+### Create user
+POST {{baseUrl}}/users
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Jane Smith",
+  "email": "jane.smith@example.com",
+  "password": "Password123!",
+  "phoneNumber": "+1234567892",
+  "role": "officer",
+  "isActive": true
+}
+
+### Get all users
+GET {{baseUrl}}/users
+Authorization: Bearer {{accessToken}}
+
+### Get all users with pagination and filters
+GET {{baseUrl}}/users?page=1&limit=10&role=user&isActive=true&search=john
+Authorization: Bearer {{accessToken}}
+
+### Get user by ID
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Update user
+PATCH {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Jane Smith Updated",
+  "phoneNumber": "+1234567893"
+}
+
+### Delete user
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Deactivate user
+PATCH {{baseUrl}}/users/{{userId}}/deactivate
+Authorization: Bearer {{accessToken}}
+
+### Activate user
+PATCH {{baseUrl}}/users/{{userId}}/activate
+Authorization: Bearer {{accessToken}}
+
+### Get users by role
+GET {{baseUrl}}/users/role/officer
+Authorization: Bearer {{accessToken}}
+
+### Get active users
+GET {{baseUrl}}/users/active
+Authorization: Bearer {{accessToken}}
+
+### Get user statistics
+GET {{baseUrl}}/users/stats
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### ACCIDENTS ENDPOINTS
+### ==============================================
+
+### Create accident
+POST {{baseUrl}}/accidents
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Two vehicle collision at intersection",
+  "severity": "moderate",
+  "status": "pending",
+  "latitude": 40.7128,
+  "longitude": -74.0060,
+  "locationAddress": "123 Main St, New York, NY",
+  "accidentDate": "2026-01-29T10:30:00Z",
+  "weatherConditions": "Clear",
+  "roadConditions": "Dry",
+  "numberOfVehicles": 2,
+  "numberOfInjuries": 1,
+  "numberOfFatalities": 0,
+  "reportedById": "{{userId}}"
+}
+
+### Get all accidents
+GET {{baseUrl}}/accidents
+Authorization: Bearer {{accessToken}}
+
+### Get accident by ID
+GET {{baseUrl}}/accidents/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
+### Get accident by report number
+GET {{baseUrl}}/accidents/report/ACC-20260129-001
+Authorization: Bearer {{accessToken}}
+
+### Get accidents by status
+GET {{baseUrl}}/accidents/status/pending
+Authorization: Bearer {{accessToken}}
+
+### Get accidents by officer
+GET {{baseUrl}}/accidents/officer/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Update accident
+PATCH {{baseUrl}}/accidents/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated description",
+  "severity": "severe",
+  "numberOfInjuries": 2
+}
+
+### Assign officer to accident
+PATCH {{baseUrl}}/accidents/{{accidentId}}/assign-officer
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "officerId": "{{userId}}"
+}
+
+### Update accident status
+PATCH {{baseUrl}}/accidents/{{accidentId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "in_progress"
+}
+
+### Delete accident
+DELETE {{baseUrl}}/accidents/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
+### Get accident statistics
+GET {{baseUrl}}/accidents/statistics
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### VEHICLES ENDPOINTS
+### ==============================================
+
+### Create vehicle
+POST {{baseUrl}}/vehicles
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "licensePlate": "ABC123",
+  "make": "Toyota",
+  "model": "Camry",
+  "year": 2020,
+  "color": "Blue",
+  "type": "sedan",
+  "driverName": "John Smith",
+  "driverLicenseNumber": "DL123456",
+  "driverPhone": "+1234567890",
+  "insuranceCompany": "State Farm",
+  "insurancePolicyNumber": "POL123456",
+  "damage": "Front bumper damage"
+}
+
+### Get all vehicles
+GET {{baseUrl}}/vehicles
+Authorization: Bearer {{accessToken}}
+
+### Get vehicle by ID
+GET {{baseUrl}}/vehicles/vehicle-id-here
+Authorization: Bearer {{accessToken}}
+
+### Get vehicles by accident
+GET {{baseUrl}}/vehicles/accident/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
+### Get vehicle by license plate
+GET {{baseUrl}}/vehicles/plate/ABC123
+Authorization: Bearer {{accessToken}}
+
+### Update vehicle
+PATCH {{baseUrl}}/vehicles/vehicle-id-here
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "damage": "Front bumper and right fender damage",
+  "color": "Dark Blue"
+}
+
+### Delete vehicle
+DELETE {{baseUrl}}/vehicles/vehicle-id-here
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### MEDIA ENDPOINTS
+### ==============================================
+
+### Create media
+POST {{baseUrl}}/media
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "type": "image",
+  "fileName": "accident_photo_1.jpg",
+  "fileUrl": "https://storage.example.com/accidents/photo1.jpg",
+  "fileSize": 2048576,
+  "mimeType": "image/jpeg",
+  "description": "Front view of damaged vehicle",
+  "uploadedById": "{{userId}}"
+}
+
+### Get all media
+GET {{baseUrl}}/media
+Authorization: Bearer {{accessToken}}
+
+### Get media by ID
+GET {{baseUrl}}/media/media-id-here
+Authorization: Bearer {{accessToken}}
+
+### Get media by accident
+GET {{baseUrl}}/media/accident/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
+### Get media by type
+GET {{baseUrl}}/media/type/image
+Authorization: Bearer {{accessToken}}
+
+### Update media
+PATCH {{baseUrl}}/media/media-id-here
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated description - Front view showing license plate"
+}
+
+### Delete media
+DELETE {{baseUrl}}/media/media-id-here
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### LOCATIONS ENDPOINTS
+### ==============================================
+
+### Create location
+POST {{baseUrl}}/locations
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Downtown Intersection",
+  "description": "Busy intersection with traffic lights",
+  "latitude": 40.7128,
+  "longitude": -74.0060,
+  "address": "123 Main St",
+  "city": "New York",
+  "state": "NY",
+  "postalCode": "10001",
+  "country": "USA",
+  "isActive": true
+}
+
+### Get all locations
+GET {{baseUrl}}/locations
+Authorization: Bearer {{accessToken}}
+
+### Get location by ID
+GET {{baseUrl}}/locations/location-id-here
+Authorization: Bearer {{accessToken}}
+
+### Get locations by city
+GET {{baseUrl}}/locations/city/New York
+Authorization: Bearer {{accessToken}}
+
+### Find nearby locations
+GET {{baseUrl}}/locations/nearby?latitude=40.7128&longitude=-74.0060&radius=5
+Authorization: Bearer {{accessToken}}
+
+### Update location
+PATCH {{baseUrl}}/locations/location-id-here
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated description - High traffic area",
+  "isActive": true
+}
+
+### Deactivate location
+PATCH {{baseUrl}}/locations/location-id-here/deactivate
+Authorization: Bearer {{accessToken}}
+
+### Delete location
+DELETE {{baseUrl}}/locations/location-id-here
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### NOTIFICATIONS ENDPOINTS
+### ==============================================
+
+### Create notification
+POST {{baseUrl}}/notifications
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "type": "accident_assigned",
+  "title": "New Accident Assigned",
+  "message": "You have been assigned to accident report ACC-20260129-001",
+  "priority": "high",
+  "accidentId": "{{accidentId}}"
+}
+
+### Get all notifications
+GET {{baseUrl}}/notifications
+Authorization: Bearer {{accessToken}}
+
+### Get notification by ID
+GET {{baseUrl}}/notifications/notification-id-here
+Authorization: Bearer {{accessToken}}
+
+### Get notifications by user
+GET {{baseUrl}}/notifications/user/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get unread notifications for user
+GET {{baseUrl}}/notifications/user/{{userId}}/unread
+Authorization: Bearer {{accessToken}}
+
+### Get unread notification count
+GET {{baseUrl}}/notifications/user/{{userId}}/unread/count
+Authorization: Bearer {{accessToken}}
+
+### Mark notification as read
+PATCH {{baseUrl}}/notifications/notification-id-here/read
+Authorization: Bearer {{accessToken}}
+
+### Mark all notifications as read for user
+PATCH {{baseUrl}}/notifications/user/{{userId}}/read-all
+Authorization: Bearer {{accessToken}}
+
+### Update notification
+PATCH {{baseUrl}}/notifications/notification-id-here
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "priority": "medium"
+}
+
+### Delete notification
+DELETE {{baseUrl}}/notifications/notification-id-here
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### EMERGENCY SERVICES ENDPOINTS
+### ==============================================
+
+### Create emergency service
+POST {{baseUrl}}/emergency-services
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "type": "ambulance",
+  "status": "dispatched",
+  "serviceProvider": "City Ambulance Service",
+  "contactNumber": "+1234567890",
+  "dispatchedAt": "2026-01-29T10:35:00Z",
+  "responderId": "{{userId}}",
+  "notes": "Patient with minor injuries, transported to City Hospital"
+}
+
+### Get all emergency services
+GET {{baseUrl}}/emergency-services
+Authorization: Bearer {{accessToken}}
+
+### Get emergency service by ID
+GET {{baseUrl}}/emergency-services/service-id-here
+Authorization: Bearer {{accessToken}}
+
+### Get emergency services by accident
+GET {{baseUrl}}/emergency-services/accident/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
+### Get emergency services by status
+GET {{baseUrl}}/emergency-services/status/dispatched
+Authorization: Bearer {{accessToken}}
+
+### Get emergency services by responder
+GET {{baseUrl}}/emergency-services/responder/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get active emergency services
+GET {{baseUrl}}/emergency-services/active
+Authorization: Bearer {{accessToken}}
+
+### Update emergency service
+PATCH {{baseUrl}}/emergency-services/service-id-here
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "notes": "Patient stabilized and transported successfully",
+  "status": "completed"
+}
+
+### Update emergency service status
+PATCH {{baseUrl}}/emergency-services/service-id-here/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "arrived"
+}
+
+### Assign responder to emergency service
+PATCH {{baseUrl}}/emergency-services/service-id-here/assign-responder
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "responderId": "{{userId}}"
+}
+
+### Delete emergency service
+DELETE {{baseUrl}}/emergency-services/service-id-here
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### REPORTS ENDPOINTS
+### ==============================================
+
+### Create report
+POST {{baseUrl}}/reports
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Monthly Accident Report",
+  "description": "Accident statistics for January 2026"
+}
+
+### Get all reports
+GET {{baseUrl}}/reports
+Authorization: Bearer {{accessToken}}
+
+### Get report by ID
+GET {{baseUrl}}/reports/report-id-here
+Authorization: Bearer {{accessToken}}
+
+### Update report
+PATCH {{baseUrl}}/reports/report-id-here
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Monthly Report",
+  "description": "Updated accident statistics"
+}
+
+### Delete report
+DELETE {{baseUrl}}/reports/report-id-here
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### APP ENDPOINTS
+### ==============================================
+
+### Health check
+GET {{baseUrl}}
