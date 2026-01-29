@@ -27,17 +27,7 @@ async function bootstrap() {
     .setDescription('API documentation for the Smart Accident Report System')
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'JWT',
-        description: 'Enter JWT token',
-        in: 'header',
-      },
-      'JWT-auth',
-    )
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
