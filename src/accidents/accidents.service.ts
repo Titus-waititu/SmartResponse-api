@@ -3,13 +3,23 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateAccidentDto } from './dto/create-accident.dto';
 import { UpdateAccidentDto } from './dto/update-accident.dto';
-import { Accident, AccidentStatus } from './entities/accident.entity';
+import {
+  Accident,
+  AccidentStatus,
+  AccidentSeverity,
+} from './entities/accident.entity';
+import { AiService } from '../ai/ai.service';
+import { UploadService } from '../upload/upload.service';
+import { DispatchService } from '../dispatch/dispatch.service';
 
 @Injectable()
 export class AccidentsService {
   constructor(
     @InjectRepository(Accident)
     private accidentRepository: Repository<Accident>,
+    private aiService: AiService,
+    private uploadService: UploadService,
+    private dispatchService: DispatchService,
   ) {}
 
   async create(createAccidentDto: CreateAccidentDto): Promise<Accident> {
@@ -19,6 +29,84 @@ export class AccidentsService {
       reportNumber,
     });
     return await this.accidentRepository.save(accident);
+  }
+
+  /**
+   * Create accident with AI analysis and automatic dispatch
+   */
+  async createWithAnalysis(
+    createAccidentDto: CreateAccidentDto,
+    images: Express.Multer.File[],
+  ): Promise<{
+    accident: Accident;
+    dispatchResult: any;
+    uploadedImages: any[];
+  }> {
+    // 1. Upload and validate images
+    const uploadedImages: any[] = [];
+    for (const image of images || []) {
+      const uploadResult = await this.uploadService.validateAndUpload(image);
+      uploadedImages.push(uploadResult);
+    }
+
+    // 2. Analyze severity with AI
+    const imageUrls = uploadedImages.map((img) => img.fileUrl);
+    const analysis = await this.aiService.analyzeAccidentSeverity(imageUrls);
+
+    // 3. Map AI severity (0-100) to AccidentSeverity enum
+    const severity = this.mapSeverityToEnum(analysis.severity);
+
+    // 4. Create accident record
+    const reportNumber = this.generateReportNumber();
+    const accident = this.accidentRepository.create({
+      ...createAccidentDto,
+      reportNumber,
+      severity,
+      status: AccidentStatus.REPORTED,
+    });
+
+    const savedAccident = await this.accidentRepository.save(accident);
+
+    // 5. Auto-dispatch emergency services based on AI analysis
+    const dispatchResult = await this.dispatchService.dispatchEmergencyServices(
+      savedAccident.id,
+      createAccidentDto.userId || 'system',
+      analysis.severity,
+      {
+        latitude: Number(createAccidentDto.latitude),
+        longitude: Number(createAccidentDto.longitude),
+      },
+    );
+
+    return {
+      accident: savedAccident,
+      dispatchResult,
+      uploadedImages,
+    };
+  }
+
+  /**
+   * Map AI severity score (0-100) to AccidentSeverity enum
+   */
+  private mapSeverityToEnum(severityScore: number): AccidentSeverity {
+    if (severityScore >= 80) {
+      return AccidentSeverity.FATAL;
+    } else if (severityScore >= 60) {
+      return AccidentSeverity.SEVERE;
+    } else if (severityScore >= 30) {
+      return AccidentSeverity.MODERATE;
+    } else {
+      return AccidentSeverity.MINOR;
+    }
+  }
+
+  private generateReportNumber(): string {
+    const date = new Date();
+    const year = date.getFullYear();
+    const random = Math.floor(Math.random() * 1000000)
+      .toString()
+      .padStart(6, '0');
+    return `ACC-${year}-${random}`;
   }
 
   async findAll(): Promise<Accident[]> {
@@ -117,16 +205,5 @@ export class AccidentsService {
       byStatus,
       bySeverity,
     };
-  }
-
-  private generateReportNumber(): string {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000)
-      .toString()
-      .padStart(4, '0');
-    return `ACC-${year}${month}${day}-${random}`;
   }
 }

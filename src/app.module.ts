@@ -15,6 +15,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { EmergencyServicesModule } from './emergency-services/emergency-services.module';
 import { DatabaseModule } from './database/database.module';
 import { LoggerMiddleware } from 'logger.middleware';
+import { AiModule } from './ai/ai.module';
+import { UploadModule } from './upload/upload.module';
+import { DispatchModule } from './dispatch/dispatch.module';
 
 @Module({
   imports: [
@@ -32,6 +35,9 @@ import { LoggerMiddleware } from 'logger.middleware';
     ReportsModule,
     NotificationsModule,
     EmergencyServicesModule,
+    AiModule,
+    UploadModule,
+    DispatchModule,
   ],
   controllers: [AppController],
   providers: [
