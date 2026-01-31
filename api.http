@@ -558,6 +558,222 @@ DELETE {{baseUrl}}/reports/report-id-here
 Authorization: Bearer {{accessToken}}
 
 ### ==============================================
+### AI ENDPOINTS
+### ==============================================
+
+### Analyze accident with AI
+POST {{baseUrl}}/ai/analyze-accident
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "description": "Two vehicle collision at intersection during rush hour",
+  "severity": "moderate",
+  "weatherConditions": "Clear",
+  "roadConditions": "Dry",
+  "numberOfVehicles": 2,
+  "numberOfInjuries": 1,
+  "images": [
+    "https://storage.example.com/accidents/photo1.jpg",
+    "https://storage.example.com/accidents/photo2.jpg"
+  ]
+}
+
+### Generate accident report with AI
+POST {{baseUrl}}/ai/generate-report
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "includeAnalysis": true,
+  "includeRecommendations": true
+}
+
+### Extract text from image
+POST {{baseUrl}}/ai/extract-text
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "imageUrl": "https://storage.example.com/accidents/license_plate.jpg"
+}
+
+### Classify accident severity
+POST {{baseUrl}}/ai/classify-severity
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Single vehicle collision with guardrail on highway",
+  "numberOfVehicles": 1,
+  "numberOfInjuries": 0,
+  "numberOfFatalities": 0,
+  "weatherConditions": "Rain",
+  "roadConditions": "Wet"
+}
+
+### Get AI insights for accident
+GET {{baseUrl}}/ai/insights/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### DISPATCH ENDPOINTS
+### ==============================================
+
+### Dispatch emergency services
+POST {{baseUrl}}/dispatch/emergency
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "serviceTypes": ["ambulance", "fire", "police"],
+  "priority": "high",
+  "location": {
+    "latitude": 40.7128,
+    "longitude": -74.0060,
+    "address": "123 Main St, New York, NY"
+  },
+  "notes": "Multiple injuries reported, fire hazard present"
+}
+
+### Get dispatch status
+GET {{baseUrl}}/dispatch/status/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
+### Update dispatch status
+PATCH {{baseUrl}}/dispatch/{{accidentId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "en_route",
+  "estimatedArrival": "2026-01-29T10:45:00Z"
+}
+
+### Cancel dispatch
+POST {{baseUrl}}/dispatch/{{accidentId}}/cancel
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "reason": "False alarm - no emergency services needed"
+}
+
+### Get active dispatches
+GET {{baseUrl}}/dispatch/active
+Authorization: Bearer {{accessToken}}
+
+### Get dispatch history
+GET {{baseUrl}}/dispatch/history?startDate=2026-01-01&endDate=2026-01-31
+Authorization: Bearer {{accessToken}}
+
+### Assign responder to dispatch
+PATCH {{baseUrl}}/dispatch/{{accidentId}}/assign
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "responderId": "{{userId}}",
+  "serviceType": "ambulance"
+}
+
+### ==============================================
+### UPLOAD ENDPOINTS
+### ==============================================
+
+### Upload file (multipart/form-data)
+POST {{baseUrl}}/upload/file
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="accident_photo.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/accident_photo.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="accidentId"
+
+{{accidentId}}
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="description"
+
+Front view of damaged vehicle
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload multiple files
+POST {{baseUrl}}/upload/files
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="photo1.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/photo1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="files"; filename="photo2.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/photo2.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="accidentId"
+
+{{accidentId}}
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload accident document
+POST {{baseUrl}}/upload/document
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="police_report.pdf"
+Content-Type: application/pdf
+
+< ./path/to/police_report.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="accidentId"
+
+{{accidentId}}
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="documentType"
+
+police_report
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload video evidence
+POST {{baseUrl}}/upload/video
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="dashcam_footage.mp4"
+Content-Type: video/mp4
+
+< ./path/to/dashcam_footage.mp4
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="accidentId"
+
+{{accidentId}}
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="description"
+
+Dashcam footage of accident
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Get upload status
+GET {{baseUrl}}/upload/status/upload-id-here
+Authorization: Bearer {{accessToken}}
+
+### Delete uploaded file
+DELETE {{baseUrl}}/upload/file/file-id-here
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
 ### APP ENDPOINTS
 ### ==============================================
 
