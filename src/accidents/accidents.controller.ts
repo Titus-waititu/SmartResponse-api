@@ -8,20 +8,33 @@ import {
   Delete,
   UseInterceptors,
   UploadedFiles,
+  UseGuards,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AccidentsService } from './accidents.service';
 import { CreateAccidentDto } from './dto/create-accident.dto';
 import { UpdateAccidentDto } from './dto/update-accident.dto';
 import { Public } from '../auth/decorators/public.decorator';
-import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiConsumes,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../auth/types';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('accidents')
 @Controller('accidents')
+@UseGuards(RolesGuard)
+@ApiBearerAuth()
 export class AccidentsController {
   constructor(private readonly accidentsService: AccidentsService) {}
 
   @Post()
+  @Roles(UserRole.USER, UserRole.OFFICER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Create accident report (basic)' })
   create(@Body() createAccidentDto: CreateAccidentDto) {
     return this.accidentsService.create(createAccidentDto);
@@ -61,16 +74,26 @@ export class AccidentsController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @ApiOperation({
+    summary: 'Get all accidents (Admin/Officer/Emergency Responder)',
+  })
   findAll() {
     return this.accidentsService.findAll();
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @ApiOperation({
+    summary: 'Get accident by ID (Admin/Officer/Emergency Responder)',
+  })
   findOne(@Param('id') id: string) {
     return this.accidentsService.findOne(id);
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @ApiOperation({ summary: 'Update accident (Admin/Officer)' })
   update(
     @Param('id') id: string,
     @Body() updateAccidentDto: UpdateAccidentDto,
@@ -79,6 +102,8 @@ export class AccidentsController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete accident (Admin only)' })
   remove(@Param('id') id: string) {
     return this.accidentsService.remove(id);
   }
