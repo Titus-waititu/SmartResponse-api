@@ -672,10 +672,12 @@ GET {{baseUrl}}/cache/clear
 Authorization: Bearer {{accessToken}}
 
 ### ==============================================
-### UPLOAD ENDPOINTS
+### UPLOAD ENDPOINTS (Cloudinary)
 ### ==============================================
+### All files are uploaded to Cloudinary cloud storage
+### Response includes secure URL and publicId for deletion
 
-### Upload file (multipart/form-data)
+### Upload single image (JPEG, PNG, GIF, WEBP - max 10MB)
 POST {{baseUrl}}/upload/file
 Authorization: Bearer {{accessToken}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -695,7 +697,18 @@ Content-Disposition: form-data; name="description"
 Front view of damaged vehicle
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### Upload multiple files
+### Response Example:
+# {
+#   "fileUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/accidents/abc123.jpg",
+#   "fileName": "accidents/abc123",
+#   "fileSize": 1048576,
+#   "mimeType": "image/jpeg",
+#   "publicId": "accidents/abc123",
+#   "accidentId": "uuid",
+#   "description": "Front view of damaged vehicle"
+# }
+
+### Upload multiple images (max 10 files)
 POST {{baseUrl}}/upload/files
 Authorization: Bearer {{accessToken}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -716,7 +729,29 @@ Content-Disposition: form-data; name="accidentId"
 {{accidentId}}
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### Upload accident document
+### Response Example:
+# {
+#   "accidentId": "uuid",
+#   "files": [
+#     {
+#       "fileUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/accidents/abc123.jpg",
+#       "fileName": "accidents/abc123",
+#       "fileSize": 1048576,
+#       "mimeType": "image/jpeg",
+#       "publicId": "accidents/abc123"
+#     },
+#     {
+#       "fileUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/accidents/def456.jpg",
+#       "fileName": "accidents/def456",
+#       "fileSize": 2097152,
+#       "mimeType": "image/jpeg",
+#       "publicId": "accidents/def456"
+#     }
+#   ],
+#   "count": 2
+# }
+
+### Upload accident document (PDF, etc.)
 POST {{baseUrl}}/upload/document
 Authorization: Bearer {{accessToken}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -736,7 +771,7 @@ Content-Disposition: form-data; name="documentType"
 police_report
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### Upload video evidence
+### Upload video evidence (MP4, MPEG, MOV - max 100MB)
 POST {{baseUrl}}/upload/video
 Authorization: Bearer {{accessToken}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -756,13 +791,40 @@ Content-Disposition: form-data; name="description"
 Dashcam footage of accident
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
+### Response Example:
+# {
+#   "fileUrl": "https://res.cloudinary.com/your-cloud/video/upload/v1234567890/accidents/xyz789.mp4",
+#   "fileName": "accidents/xyz789",
+#   "fileSize": 52428800,
+#   "mimeType": "video/mp4",
+#   "publicId": "accidents/xyz789",
+#   "accidentId": "uuid",
+#   "description": "Dashcam footage of accident",
+#   "type": "video"
+# }
+
 ### Get upload status
 GET {{baseUrl}}/upload/status/upload-id-here
 Authorization: Bearer {{accessToken}}
 
-### Delete uploaded file
-DELETE {{baseUrl}}/upload/file/file-id-here
+### Response Example:
+# {
+#   "uploadId": "upload-id-here",
+#   "status": "completed",
+#   "progress": 100,
+#   "uploadedAt": "2026-02-07T00:00:00.000Z"
+# }
+
+### Delete uploaded file from Cloudinary (use publicId from upload response)
+# Example publicId: accidents/abc123 (URL encode if contains special chars)
+DELETE {{baseUrl}}/upload/file/accidents%2Fabc123
 Authorization: Bearer {{accessToken}}
+
+### Response Example:
+# {
+#   "message": "File deleted successfully",
+#   "publicId": "accidents/abc123"
+# }
 
 ### ==============================================
 ### APP ENDPOINTS

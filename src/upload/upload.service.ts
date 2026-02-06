@@ -110,21 +110,15 @@ export class UploadService {
     const formatMap: Record<string, string> = {
       'image/jpeg': 'jpg',
       'image/png': 'png',
-      'image/gif': 'gif', for images
-    const maxVideoSize = 100 * 1024 * 1024; // 100MB for videos
-    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    const allowedVideoTypes = ['video/mp4', 'video/mpeg', 'video/quicktime'];
-    const allAllowedTypes = [...allowedImageTypes, ...allowedVideoTypes];
+      'image/gif': 'gif',
+      'image/webp': 'webp',
+      'video/mp4': 'mp4',
+      'video/mpeg': 'mpeg',
+      'video/quicktime': 'mov',
+    };
+    return formatMap[mimeType];
+  }
 
-    if (!this.validateFileType(file, allAllowedTypes)) {
-      throw new BadRequestException('Invalid file type. Only images (JPEG, PNG, GIF, WEBP) and videos (MP4, MPEG, MOV) are allowed.');
-    }
-
-    const isVideo = file.mimetype.startsWith('video/');
-    const maxAllowedSize = isVideo ? maxVideoSize : maxSize;
-
-    if (!this.validateFileSize(file, maxAllowedSize)) {
-      throw new BadRequestException(`File size exceeds maximum of ${maxAllowedSize / (1024 * 1024)}MB.`
   /**
    * Validate file type
    */
@@ -143,15 +137,30 @@ export class UploadService {
    * Validate and upload file
    */
   async validateAndUpload(file: Express.Multer.File): Promise<UploadResult> {
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const allowedTypes = ['image/jpeg', 'image/png'];
+    const maxSize = 10 * 1024 * 1024; // 10MB for images
+    const maxVideoSize = 100 * 1024 * 1024; // 100MB for videos
+    const allowedImageTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+    ];
+    const allowedVideoTypes = ['video/mp4', 'video/mpeg', 'video/quicktime'];
+    const allAllowedTypes = [...allowedImageTypes, ...allowedVideoTypes];
 
-    if (!this.validateFileType(file, allowedTypes)) {
-      throw new Error('Invalid file type. Only JPEG and PNG are allowed.');
+    if (!this.validateFileType(file, allAllowedTypes)) {
+      throw new BadRequestException(
+        'Invalid file type. Only images (JPEG, PNG, GIF, WEBP) and videos (MP4, MPEG, MOV) are allowed.',
+      );
     }
 
-    if (!this.validateFileSize(file, maxSize)) {
-      throw new Error('File size exceeds maximum of 10MB.');
+    const isVideo = file.mimetype.startsWith('video/');
+    const maxAllowedSize = isVideo ? maxVideoSize : maxSize;
+
+    if (!this.validateFileSize(file, maxAllowedSize)) {
+      throw new BadRequestException(
+        `File size exceeds maximum of ${maxAllowedSize / (1024 * 1024)}MB.`,
+      );
     }
 
     return this.uploadFile(file, 'accidents');
