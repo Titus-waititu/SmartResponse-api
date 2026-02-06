@@ -1,5 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -18,6 +18,12 @@ import { LoggerMiddleware } from 'logger.middleware';
 import { AiModule } from './ai/ai.module';
 import { UploadModule } from './upload/upload.module';
 import { DispatchModule } from './dispatch/dispatch.module';
+import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
+import { createKeyv, Keyv } from '@keyv/redis';
+import { CacheableMemory } from 'cacheable';
+
+
+
 
 @Module({
   imports: [
@@ -38,6 +44,24 @@ import { DispatchModule } from './dispatch/dispatch.module';
     AiModule,
     UploadModule,
     DispatchModule,
+   CacheModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      isGlobal: true,
+      useFactory: (configService: ConfigService) => {
+        return {
+          ttl: 60000, // Default TTL for cache entries
+          stores: [
+            // Memory store for fast local access
+            new Keyv({
+              store: new CacheableMemory({ ttl: 30000, lruSize: 5000 }),
+            }),
+            // Redis store for distributed caching
+            createKeyv(configService.getOrThrow<string>('REDIS_URL')),
+          ],
+        };
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [
