@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { UsersModule } from './users/users.module';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AccidentsModule } from './accidents/accidents.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { MediaModule } from './media/media.module';
@@ -47,15 +47,25 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
       inject: [ConfigService],
       isGlobal: true,
       useFactory: (configService: ConfigService) => {
+        // Build Redis URL from individual config values or use REDIS_URL directly
+        const redisUrl =
+          configService.get<string>('REDIS_URL') ||
+          `redis://:${configService.get<string>('REDIS_PASSWORD', '')}@${configService.get<string>('REDIS_HOST', 'localhost')}:${configService.get<number>('REDIS_PORT', 6379)}`;
+
+        console.log(
+          'Cache configuration - Redis URL:',
+          redisUrl.replace(/:[^:@]*@/, ':****@'),
+        ); // Log with masked password
+
         return {
-          ttl: 60000, // Default TTL for cache entries
+          ttl: 60000, // Default TTL for cache entries (60 seconds)
           stores: [
             // Memory store for fast local access
             new Keyv({
               store: new CacheableMemory({ ttl: 30000, lruSize: 5000 }),
             }),
             // Redis store for distributed caching
-            createKeyv(configService.getOrThrow<string>('REDIS_URL')),
+            createKeyv(redisUrl),
           ],
         };
       },
@@ -72,7 +82,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
             infer: true,
           }),
           ignoreUserAgents: [/^curl\//, /^PostmanRuntime\//],
-        }
+        },
       ],
     }),
   ],
@@ -82,6 +92,14 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CacheInterceptor,
     },
   ],
 })
