@@ -311,7 +311,7 @@ export class AuthService {
     try {
       const decoded = this.jwtService.verify(token, {
         secret: this.configService.getOrThrow<string>('JWT_RESET_TOKEN_SECRET'),
-      });
+      }) as { email: string };
       const decodedEmail: string = decoded.email;
       const user = await this.usersRepository.findOne({
         where: { email: decodedEmail },

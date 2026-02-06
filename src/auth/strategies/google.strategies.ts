@@ -24,9 +24,14 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     _accessToken: string,
     _refreshToken: string,
-    profile: any,
+    profile: {
+      id: string;
+      name: { givenName?: string; familyName?: string };
+      emails: { value: string }[];
+      photos: { value: string }[];
+    },
     done: VerifyCallback,
-  ): Promise<any> {
+  ): Promise<void> {
     const { id, name, emails, photos } = profile;
 
     // Check if user already exists in DB
@@ -38,9 +43,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     if (!user) {
       user = this.userRepository.create({
         email: emails[0].value,
-        username: name.givenName || name.familyName,
+        username: name.givenName || name.familyName || 'User',
         role: UserRole.EMERGENCY_RESPONDER,
-        image_url: photos[0].value,
+        image_url: photos[0]?.value,
       });
       await this.userRepository.save(user);
     }
@@ -50,7 +55,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       email: user.email,
       username: user.username,
       role: user.role,
-      image_url: photos[0].value,
+      image_url: photos[0]?.value,
       providerId: id,
       provider: 'google',
     });

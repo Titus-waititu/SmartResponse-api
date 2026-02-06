@@ -11,7 +11,6 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,

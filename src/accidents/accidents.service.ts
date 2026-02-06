@@ -43,14 +43,14 @@ export class AccidentsService {
     uploadedImages: any[];
   }> {
     // 1. Upload and validate images
-    const uploadedImages: any[] = [];
+    const uploadedImages: { fileUrl: string }[] = [];
     for (const image of images || []) {
       const uploadResult = await this.uploadService.validateAndUpload(image);
       uploadedImages.push(uploadResult);
     }
 
     // 2. Analyze severity with AI
-    const imageUrls = uploadedImages.map((img) => img.fileUrl);
+    const imageUrls: string[] = uploadedImages.map((img) => img.fileUrl);
     const analysis = await this.aiService.analyzeAccidentSeverity(imageUrls);
 
     // 3. Map AI severity (0-100) to AccidentSeverity enum

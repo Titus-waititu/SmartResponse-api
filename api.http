@@ -622,63 +622,54 @@ Authorization: Bearer {{accessToken}}
 ### DISPATCH ENDPOINTS
 ### ==============================================
 
-### Dispatch emergency services
-POST {{baseUrl}}/dispatch/emergency
+### Manual dispatch emergency services
+POST {{baseUrl}}/dispatch/manual
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
   "accidentId": "{{accidentId}}",
-  "serviceTypes": ["ambulance", "fire", "police"],
-  "priority": "high",
-  "location": {
-    "latitude": 40.7128,
-    "longitude": -74.0060,
-    "address": "123 Main St, New York, NY"
-  },
-  "notes": "Multiple injuries reported, fire hazard present"
-}
-
-### Get dispatch status
-GET {{baseUrl}}/dispatch/status/{{accidentId}}
-Authorization: Bearer {{accessToken}}
-
-### Update dispatch status
-PATCH {{baseUrl}}/dispatch/{{accidentId}}/status
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "status": "en_route",
-  "estimatedArrival": "2026-01-29T10:45:00Z"
-}
-
-### Cancel dispatch
-POST {{baseUrl}}/dispatch/{{accidentId}}/cancel
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "reason": "False alarm - no emergency services needed"
+  "userId": "{{userId}}",
+  "severity": 75,
+  "latitude": 40.7128,
+  "longitude": -74.0060
 }
 
 ### Get active dispatches
 GET {{baseUrl}}/dispatch/active
 Authorization: Bearer {{accessToken}}
 
-### Get dispatch history
-GET {{baseUrl}}/dispatch/history?startDate=2026-01-01&endDate=2026-01-31
+### Get pending dispatches
+GET {{baseUrl}}/dispatch/pending
 Authorization: Bearer {{accessToken}}
 
-### Assign responder to dispatch
-PATCH {{baseUrl}}/dispatch/{{accidentId}}/assign
+### Get completed dispatches
+GET {{baseUrl}}/dispatch/completed
 Authorization: Bearer {{accessToken}}
-Content-Type: application/json
 
-{
-  "responderId": "{{userId}}",
-  "serviceType": "ambulance"
-}
+### Get dispatches by accident
+GET {{baseUrl}}/dispatch/accident/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
+### Get dispatch statistics
+GET {{baseUrl}}/dispatch/statistics
+Authorization: Bearer {{accessToken}}
+
+### ==============================================
+### CACHE TESTING ENDPOINTS
+### ==============================================
+
+### Test cache functionality
+GET {{baseUrl}}/cache/test
+Authorization: Bearer {{accessToken}}
+
+### Get cache stats (with hit/miss demo)
+GET {{baseUrl}}/cache/stats
+Authorization: Bearer {{accessToken}}
+
+### Clear all cache
+GET {{baseUrl}}/cache/clear
+Authorization: Bearer {{accessToken}}
 
 ### ==============================================
 ### UPLOAD ENDPOINTS

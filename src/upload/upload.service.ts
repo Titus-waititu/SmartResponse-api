@@ -1,55 +1,69 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
-import * as path from 'path';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import * as streamifier from 'streamifier';
 
 export interface UploadResult {
   fileUrl: string;
   fileName: string;
   fileSize: number;
   mimeType: string;
+  publicId?: string;
 }
 
 @Injectable()
 export class UploadService {
   private readonly logger = new Logger(UploadService.name);
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) {
+    // Configure Cloudinary
+    cloudinary.config({
+      cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME'),
+      api_key: this.configService.get<string>('CLOUDINARY_API_KEY'),
+      api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET'),
+    });
+  }
 
   /**
-   * Upload file to cloud storage
-   * In production, integrate with AWS S3, Azure Blob Storage, or Google Cloud Storage
+   * Upload file to Cloudinary
    */
   async uploadFile(
     file: Express.Multer.File,
     folder: string = 'accidents',
   ): Promise<UploadResult> {
     try {
-      this.logger.log(`Uploading file: ${file.originalname}`);
+      this.logger.log(`Uploading file: ${file.originalname} to Cloudinary`);
 
-      // Generate unique filename
-      const fileExt = path.extname(file.originalname);
-      const uniqueFileName = `${folder}/${crypto.randomBytes(16).toString('hex')}${fileExt}`;
+      const resourceType = this.getResourceType(file.mimetype);
 
-      // TODO: Implement actual cloud storage upload
-      // For AWS S3:
-      // await this.s3.upload({ Bucket: 'your-bucket', Key: uniqueFileName, Body: file.buffer }).promise();
+      const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder,
+            resource_type: resourceType,
+            format: this.getFormatFromMimeType(file.mimetype),
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            if (result) return resolve(result);
+          },
+        );
 
-      // For Azure Blob Storage:
-      // await this.blobServiceClient.getContainerClient('accidents').uploadBlockBlob(uniqueFileName, file.buffer, file.size);
+        streamifier.createReadStream(file.buffer).pipe(uploadStream);
+      });
 
-      // Mock URL for now
-      const fileUrl = `https://storage.example.com/${uniqueFileName}`;
+      this.logger.log(`File uploaded successfully: ${result.secure_url}`);
 
       return {
-        fileUrl,
-        fileName: uniqueFileName,
-        fileSize: file.size,
+        fileUrl: result.secure_url,
+        fileName: result.public_id,
+        fileSize: result.bytes,
         mimeType: file.mimetype,
+        publicId: result.public_id,
       };
     } catch (error) {
-      this.logger.error('Error uploading file', error);
-      throw error;
+      this.logger.error('Error uploading file to Cloudinary', error);
+      throw new BadRequestException('Failed to upload file');
     }
   }
 
@@ -65,18 +79,52 @@ export class UploadService {
   }
 
   /**
-   * Delete file from cloud storage
+   * Delete file from Cloudinary
    */
-  async deleteFile(fileUrl: string): Promise<void> {
+  async deleteFile(publicId: string): Promise<void> {
     try {
-      this.logger.log(`Deleting file: ${fileUrl}`);
-      // TODO: Implement actual cloud storage deletion
+      this.logger.log(`Deleting file from Cloudinary: ${publicId}`);
+      await cloudinary.uploader.destroy(publicId);
+      this.logger.log(`File deleted successfully: ${publicId}`);
     } catch (error) {
-      this.logger.error('Error deleting file', error);
-      throw error;
+      this.logger.error('Error deleting file from Cloudinary', error);
+      throw new BadRequestException('Failed to delete file');
     }
   }
 
+  /**
+   * Get resource type for Cloudinary based on MIME type
+   */
+  private getResourceType(
+    mimeType: string,
+  ): 'image' | 'video' | 'raw' | 'auto' {
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('video/')) return 'video';
+    return 'auto';
+  }
+
+  /**
+   * Get format from MIME type
+   */
+  private getFormatFromMimeType(mimeType: string): string | undefined {
+    const formatMap: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif', for images
+    const maxVideoSize = 100 * 1024 * 1024; // 100MB for videos
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedVideoTypes = ['video/mp4', 'video/mpeg', 'video/quicktime'];
+    const allAllowedTypes = [...allowedImageTypes, ...allowedVideoTypes];
+
+    if (!this.validateFileType(file, allAllowedTypes)) {
+      throw new BadRequestException('Invalid file type. Only images (JPEG, PNG, GIF, WEBP) and videos (MP4, MPEG, MOV) are allowed.');
+    }
+
+    const isVideo = file.mimetype.startsWith('video/');
+    const maxAllowedSize = isVideo ? maxVideoSize : maxSize;
+
+    if (!this.validateFileSize(file, maxAllowedSize)) {
+      throw new BadRequestException(`File size exceeds maximum of ${maxAllowedSize / (1024 * 1024)}MB.`
   /**
    * Validate file type
    */

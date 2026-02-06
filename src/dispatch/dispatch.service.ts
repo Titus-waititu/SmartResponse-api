@@ -117,6 +117,7 @@ export class DispatchService {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private getEmergencyContact(type: ServiceType): string {
     // In production, this would be based on location and actual emergency numbers
     return '911';

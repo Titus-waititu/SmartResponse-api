@@ -56,7 +56,13 @@ export class AiService {
       });
 
       const content = response.choices[0]?.message?.content || '{}';
-      const parsed = JSON.parse(content);
+      const parsed = JSON.parse(content) as {
+        severity?: number;
+        analysis?: string;
+        detectedInjuries?: string[];
+        vehicleDamage?: string;
+        recommendedServices?: string[];
+      };
 
       return {
         severity: parsed.severity || 50,
@@ -84,33 +90,45 @@ export class AiService {
   /**
    * Analyze specific aspects of accident images
    */
-  async detectVehicleDamage(imageUrl: string): Promise<string[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  detectVehicleDamage(imageUrl: string): Promise<string[]> {
     // TODO: Implement vehicle damage detection
-    return ['Front bumper damaged', 'Hood deformed', 'Windshield cracked'];
+    return Promise.resolve([
+      'Front bumper damaged',
+      'Hood deformed',
+      'Windshield cracked',
+    ]);
   }
 
   /**
    * Detect potential injuries from scene
    */
-  async detectPotentialInjuries(imageUrl: string): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  detectPotentialInjuries(imageUrl: string): Promise<boolean> {
     // TODO: Implement injury detection
-    return true;
+    return Promise.resolve(true);
   }
 
   /**
    * Identify hazards in accident scene
    */
-  async identifyHazards(imageUrl: string): Promise<string[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  identifyHazards(imageUrl: string): Promise<string[]> {
     // TODO: Implement hazard detection
-    return ['Fuel leak', 'Sharp debris', 'Exposed wiring'];
+    return Promise.resolve(['Fuel leak', 'Sharp debris', 'Exposed wiring']);
   }
 
   /**
    * Generate AI-powered accident report summary
    */
-  async generateAccidentSummary(
-    accidentData: any,
-  ): Promise<{ summary: string; keyPoints: string[] }> {
+  generateAccidentSummary(accidentData: {
+    locationAddress: string;
+    severity: string;
+    numberOfVehicles: number;
+    numberOfInjuries: number;
+    weatherConditions: string;
+    roadConditions: string;
+  }): Promise<{ summary: string; keyPoints: string[] }> {
     try {
       // TODO: Integrate with GPT-4 or similar for report generation
       const summary = `
@@ -129,7 +147,7 @@ export class AiService {
         `Injuries: ${accidentData.numberOfInjuries}`,
       ];
 
-      return { summary: summary.trim(), keyPoints };
+      return Promise.resolve({ summary: summary.trim(), keyPoints });
     } catch (error) {
       this.logger.error('Error generating accident summary', error);
       throw error;

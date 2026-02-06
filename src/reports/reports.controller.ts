@@ -28,7 +28,8 @@ export class ReportsController {
   @ApiOperation({
     summary: 'Create report (Admin/Officer/Emergency Responder)',
   })
-  create(@Body() _createReportDto: CreateReportDto) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  create(@Body() createReportDto: CreateReportDto) {
     return this.reportsService.create();
   }
 
@@ -55,7 +56,8 @@ export class ReportsController {
   @ApiOperation({
     summary: 'Update report (Admin/Officer/Emergency Responder)',
   })
-  update(@Param('id') id: string, @Body() _updateReportDto: UpdateReportDto) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  update(@Param('id') id: string, @Body() updateReportDto: UpdateReportDto) {
     return this.reportsService.update(Number(id));
   }
 

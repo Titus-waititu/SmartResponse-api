@@ -77,10 +77,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
         {
           ttl: configService.getOrThrow<number>('THROTTLE_TTL', {
             infer: true,
-          }),
+          }) as number,
           limit: configService.getOrThrow<number>('THROTTLE_LIMIT', {
             infer: true,
-          }),
+          }) as number,
           ignoreUserAgents: [/^curl\//, /^PostmanRuntime\//],
         },
       ],
