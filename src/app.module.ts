@@ -21,9 +21,7 @@ import { DispatchModule } from './dispatch/dispatch.module';
 import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { createKeyv, Keyv } from '@keyv/redis';
 import { CacheableMemory } from 'cacheable';
-
-
-
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -44,7 +42,7 @@ import { CacheableMemory } from 'cacheable';
     AiModule,
     UploadModule,
     DispatchModule,
-   CacheModule.registerAsync({
+    CacheModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       isGlobal: true,
@@ -61,6 +59,21 @@ import { CacheableMemory } from 'cacheable';
           ],
         };
       },
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => [
+        {
+          ttl: configService.getOrThrow<number>('THROTTLE_TTL', {
+            infer: true,
+          }),
+          limit: configService.getOrThrow<number>('THROTTLE_LIMIT', {
+            infer: true,
+          }),
+          ignoreUserAgents: [/^curl\//, /^PostmanRuntime\//],
+        }
+      ],
     }),
   ],
   controllers: [AppController],
