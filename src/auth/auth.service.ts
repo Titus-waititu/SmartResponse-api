@@ -82,7 +82,6 @@ export class AuthService {
     };
   }
 
-
   async signIn(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -244,10 +243,12 @@ export class AuthService {
     return this.jwtService.sign(
       { userId, email },
       {
-        secret: this.configService.getOrThrow<string>('JWT_RESET_TOKEN_SECRET'),
-        expiresIn: this.configService.getOrThrow(
-          'JWT_RESET_TOKEN_EXPIRATION_TIME',
-        ),
+        secret:
+          this.configService.get<string>('JWT_RESET_TOKEN_SECRET') ||
+          this.configService.get<string>('JWT_SECRET') ||
+          'reset-token-secret',
+        expiresIn:
+          this.configService.get('JWT_RESET_TOKEN_EXPIRATION_TIME') || '1h',
       },
     );
   }
@@ -255,7 +256,10 @@ export class AuthService {
   async verifyResetToken(token: string): Promise<string> {
     try {
       const decoded = this.jwtService.verify(token, {
-        secret: this.configService.getOrThrow<string>('JWT_RESET_TOKEN_SECRET'),
+        secret:
+          this.configService.get<string>('JWT_RESET_TOKEN_SECRET') ||
+          this.configService.get<string>('JWT_SECRET') ||
+          'reset-token-secret',
       }) as { email: string };
       const decodedEmail: string = decoded.email;
       const user = await this.usersRepository.findOne({
