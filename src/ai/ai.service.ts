@@ -34,7 +34,7 @@ export class AiService {
       }
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
 
       // Fetch images and convert to base64
       const imageParts = await Promise.all(
