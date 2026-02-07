@@ -18,34 +18,71 @@ import { AiService } from './ai.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/types';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { ApiProperty } from '@nestjs/swagger';
 
 class AnalyzeAccidentDto {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   accidentId: string;
+
+  @ApiProperty({ example: 'Multi-vehicle collision on Highway 101' })
   description: string;
+
+  @ApiProperty({ required: false, example: 'moderate' })
   severity?: string;
+
+  @ApiProperty({ required: false, example: 'clear' })
   weatherConditions?: string;
+
+  @ApiProperty({ required: false, example: 'dry' })
   roadConditions?: string;
+
+  @ApiProperty({ example: 2 })
   numberOfVehicles: number;
+
+  @ApiProperty({ example: 1 })
   numberOfInjuries: number;
+
+  @ApiProperty({
+    required: false,
+    type: [String],
+    example: ['https://example.com/image1.jpg'],
+  })
   images?: string[];
 }
 
 class GenerateReportDto {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   accidentId: string;
+
+  @ApiProperty({ required: false, example: true })
   includeAnalysis?: boolean;
+
+  @ApiProperty({ required: false, example: true })
   includeRecommendations?: boolean;
 }
 
 class ExtractTextDto {
+  @ApiProperty({ example: 'https://example.com/license-plate.jpg' })
   imageUrl: string;
 }
 
 class ClassifySeverityDto {
+  @ApiProperty({ example: 'Head-on collision with multiple injuries' })
   description: string;
+
+  @ApiProperty({ example: 2 })
   numberOfVehicles: number;
+
+  @ApiProperty({ example: 3 })
   numberOfInjuries: number;
+
+  @ApiProperty({ example: 0 })
   numberOfFatalities: number;
+
+  @ApiProperty({ required: false, example: 'rainy' })
   weatherConditions?: string;
+
+  @ApiProperty({ required: false, example: 'wet' })
   roadConditions?: string;
 }
 

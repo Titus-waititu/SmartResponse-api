@@ -24,12 +24,22 @@ import {
   EmergencyService,
   ServiceStatus,
 } from '../emergency-services/entities/emergency-service.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 class ManualDispatchDto {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   accidentId: string;
+
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   userId: string;
+
+  @ApiProperty({ example: 75, description: 'Severity score (0-100)' })
   severity: number;
+
+  @ApiProperty({ example: 37.7749 })
   latitude: number;
+
+  @ApiProperty({ example: -122.4194 })
   longitude: number;
 }
 
