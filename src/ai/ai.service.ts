@@ -39,18 +39,43 @@ export class AiService {
       // Fetch images and convert to base64
       const imageParts = await Promise.all(
         imageUrls.map(async (url) => {
-          const response = await fetch(url);
-          const buffer = await response.arrayBuffer();
-          const base64 = Buffer.from(buffer).toString('base64');
-          const mimeType = response.headers.get('content-type') || 'image/jpeg';
-          return {
-            inlineData: {
-              data: base64,
-              mimeType,
-            },
-          };
+          try {
+            const response = await fetch(url);
+            if (!response.ok) {
+              this.logger.warn(
+                `Failed to fetch image from ${url}: ${response.status}`,
+              );
+              return null;
+            }
+            const buffer = await response.arrayBuffer();
+            const base64 = Buffer.from(buffer).toString('base64');
+            const mimeType =
+              response.headers.get('content-type') || 'image/jpeg';
+            return {
+              inlineData: {
+                data: base64,
+                mimeType,
+              },
+            };
+          } catch (error) {
+            this.logger.warn(
+              `Error fetching image from ${url}:`,
+              error.message,
+            );
+            return null;
+          }
         }),
       );
+
+      // Filter out failed image fetches
+      const validImageParts = imageParts.filter((part) => part !== null);
+
+      if (validImageParts.length === 0) {
+        this.logger.warn(
+          'No valid images could be fetched, using mock analysis',
+        );
+        return this.getMockAnalysis();
+      }
 
       const prompt = `Analyze this accident scene and provide a JSON response with the following structure:
 {
@@ -63,7 +88,7 @@ export class AiService {
 
 Assess the severity of the accident, identify visible injuries, describe vehicle damage, and recommend appropriate emergency services (e.g., police, ambulance, fire department).`;
 
-      const result = await model.generateContent([prompt, ...imageParts]);
+      const result = await model.generateContent([prompt, ...validImageParts]);
       const response = result.response;
       const text = response.text();
 

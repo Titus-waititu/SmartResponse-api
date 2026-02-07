@@ -608,9 +608,24 @@ Content-Type: application/json
   "numberOfVehicles": 2,
   "numberOfInjuries": 1,
   "images": [
-    "https://storage.example.com/accidents/photo1.jpg",
-    "https://storage.example.com/accidents/photo2.jpg"
+    "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=800",
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800"
   ]
+}
+
+### Analyze accident with AI (no images - uses mock data)
+POST {{baseUrl}}/ai/analyze-accident
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "description": "Two vehicle collision at intersection during rush hour",
+  "severity": "moderate",
+  "weatherConditions": "Clear",
+  "roadConditions": "Dry",
+  "numberOfVehicles": 2,
+  "numberOfInjuries": 1
 }
 
 ### Generate accident report with AI
