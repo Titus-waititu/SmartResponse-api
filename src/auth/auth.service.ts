@@ -258,7 +258,7 @@ export class AuthService {
           this.configService.get<string>('JWT_RESET_TOKEN_SECRET') ||
           this.configService.get<string>('JWT_SECRET') ||
           'reset-token-secret',
-      }) as { email: string; userId: string };
+      });
       const decodedEmail: string = decoded.email;
       const user = await this.usersRepository.findOne({
         where: { email: decodedEmail },
