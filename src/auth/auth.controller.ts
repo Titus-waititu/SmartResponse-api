@@ -16,7 +16,6 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
-  RegisterDto,
   LoginDto,
   ChangePasswordDto,
   ForgotPasswordDto,

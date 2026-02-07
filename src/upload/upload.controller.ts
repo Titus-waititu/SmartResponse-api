@@ -9,7 +9,6 @@ import {
   UploadedFile,
   UploadedFiles,
   UseGuards,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {

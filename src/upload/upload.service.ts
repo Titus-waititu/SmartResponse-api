@@ -44,7 +44,8 @@ export class UploadService {
             format: this.getFormatFromMimeType(file.mimetype),
           },
           (error, result) => {
-            if (error) return reject(error);
+            if (error)
+              return reject(new Error(error.message || 'Upload failed'));
             if (result) return resolve(result);
           },
         );

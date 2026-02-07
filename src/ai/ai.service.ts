@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface SeverityAnalysisResult {
   severity: number; // 0-100 severity score
@@ -34,12 +34,12 @@ export class AiService {
       }
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      
-      const model = genAI.getGenerativeModel({ 
+
+      const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
         generationConfig: {
-            responseMimeType: "application/json",
-        }
+          responseMimeType: 'application/json',
+        },
       });
 
       const imageParts = await Promise.all(
@@ -47,12 +47,15 @@ export class AiService {
           try {
             const response = await fetch(url);
             if (!response.ok) {
-              this.logger.warn(`Failed to fetch image from ${url}: ${response.status}`);
+              this.logger.warn(
+                `Failed to fetch image from ${url}: ${response.status}`,
+              );
               return null;
             }
             const buffer = await response.arrayBuffer();
             const base64 = Buffer.from(buffer).toString('base64');
-            const mimeType = response.headers.get('content-type') || 'image/jpeg';
+            const mimeType =
+              response.headers.get('content-type') || 'image/jpeg';
             return {
               inlineData: {
                 data: base64,
@@ -60,7 +63,10 @@ export class AiService {
               },
             };
           } catch (error) {
-            this.logger.warn(`Error fetching image from ${url}:`, error.message);
+            this.logger.warn(
+              `Error fetching image from ${url}:`,
+              error instanceof Error ? error.message : 'Unknown error',
+            );
             return null;
           }
         }),
@@ -69,7 +75,9 @@ export class AiService {
       const validImageParts = imageParts.filter((part) => part !== null);
 
       if (validImageParts.length === 0) {
-        this.logger.warn('No valid images could be fetched, using mock analysis');
+        this.logger.warn(
+          'No valid images could be fetched, using mock analysis',
+        );
         return this.getMockAnalysis();
       }
 
@@ -106,7 +114,8 @@ export class AiService {
   private getMockAnalysis(): SeverityAnalysisResult {
     return {
       severity: 65,
-      analysis: 'Moderate collision detected with visible vehicle damage (Mock)',
+      analysis:
+        'Moderate collision detected with visible vehicle damage (Mock)',
       detectedInjuries: ['possible minor injuries'],
       vehicleDamage: 'Front-end damage visible',
       recommendedServices: ['police', 'ambulance'],
@@ -114,10 +123,15 @@ export class AiService {
   }
 
   // ... rest of your methods remain the same ...
-  
-  generateAccidentSummary(accidentData: any): Promise<{ summary: string; keyPoints: string[] }> {
-      const summary = `Accident reported at ${accidentData.locationAddress}. Severity: ${accidentData.severity}.`;
-      const keyPoints = [`Location: ${accidentData.locationAddress}`];
-      return Promise.resolve({ summary, keyPoints });
+
+  generateAccidentSummary(accidentData: {
+    locationAddress?: string;
+    severity?: string;
+  }): Promise<{ summary: string; keyPoints: string[] }> {
+    const summary = `Accident reported at ${accidentData.locationAddress ?? 'unknown location'}. Severity: ${accidentData.severity ?? 'unknown'}.`;
+    const keyPoints = [
+      `Location: ${accidentData.locationAddress ?? 'unknown location'}`,
+    ];
+    return Promise.resolve({ summary, keyPoints });
   }
 }

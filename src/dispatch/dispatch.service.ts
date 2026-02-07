@@ -99,7 +99,8 @@ export class DispatchService {
 
   private getServiceProvider(
     type: ServiceType,
-    location: { latitude: number; longitude: number },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _location: { latitude: number; longitude: number },
   ): string {
     // In production, this would query a database of nearby service providers
     // For now, return default providers

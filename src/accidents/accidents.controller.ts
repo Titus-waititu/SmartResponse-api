@@ -14,6 +14,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { AccidentsService } from './accidents.service';
 import { CreateAccidentDto } from './dto/create-accident.dto';
 import { UpdateAccidentDto } from './dto/update-accident.dto';
+import { AccidentStatus } from './entities/accident.entity';
 import { Public } from '../auth/decorators/public.decorator';
 import {
   ApiTags,
@@ -93,7 +94,7 @@ export class AccidentsController {
   @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
   @ApiOperation({ summary: 'Get accidents by status' })
   findByStatus(@Param('status') status: string) {
-    return this.accidentsService.findByStatus(status as any);
+    return this.accidentsService.findByStatus(status as AccidentStatus);
   }
 
   @Get('officer/:officerId')
@@ -140,7 +141,10 @@ export class AccidentsController {
   @Roles(UserRole.ADMIN, UserRole.OFFICER)
   @ApiOperation({ summary: 'Update accident status' })
   updateStatus(@Param('id') id: string, @Body() body: { status: string }) {
-    return this.accidentsService.updateStatus(id, body.status as any);
+    return this.accidentsService.updateStatus(
+      id,
+      body.status as AccidentStatus,
+    );
   }
 
   @Delete(':id')

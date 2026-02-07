@@ -9,7 +9,6 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import {
-  RegisterDto,
   LoginDto,
   ChangePasswordDto,
   ForgotPasswordDto,
@@ -19,7 +18,6 @@ import { UpdateProfileDto } from './dto/update-auth.dto';
 import { User } from '../users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserRole } from './types';
 
 @Injectable()
 export class AuthService {
@@ -260,7 +258,7 @@ export class AuthService {
           this.configService.get<string>('JWT_RESET_TOKEN_SECRET') ||
           this.configService.get<string>('JWT_SECRET') ||
           'reset-token-secret',
-      }) as { email: string };
+      }) as { email: string; userId: string };
       const decodedEmail: string = decoded.email;
       const user = await this.usersRepository.findOne({
         where: { email: decodedEmail },
