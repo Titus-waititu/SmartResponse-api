@@ -19,27 +19,44 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/types';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  IsUUID,
+} from 'class-validator';
 
 class AnalyzeAccidentDto {
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  @IsUUID()
   accidentId: string;
 
   @ApiProperty({ example: 'Multi-vehicle collision on Highway 101' })
+  @IsString()
   description: string;
 
   @ApiProperty({ required: false, example: 'moderate' })
+  @IsOptional()
+  @IsString()
   severity?: string;
 
   @ApiProperty({ required: false, example: 'clear' })
+  @IsOptional()
+  @IsString()
   weatherConditions?: string;
 
   @ApiProperty({ required: false, example: 'dry' })
+  @IsOptional()
+  @IsString()
   roadConditions?: string;
 
   @ApiProperty({ example: 2 })
+  @IsNumber()
   numberOfVehicles: number;
 
   @ApiProperty({ example: 1 })
+  @IsNumber()
   numberOfInjuries: number;
 
   @ApiProperty({
@@ -47,42 +64,57 @@ class AnalyzeAccidentDto {
     type: [String],
     example: ['https://example.com/image1.jpg'],
   })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   images?: string[];
 }
 
 class GenerateReportDto {
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  @IsUUID()
   accidentId: string;
 
   @ApiProperty({ required: false, example: true })
+  @IsOptional()
   includeAnalysis?: boolean;
 
   @ApiProperty({ required: false, example: true })
+  @IsOptional()
   includeRecommendations?: boolean;
 }
 
 class ExtractTextDto {
   @ApiProperty({ example: 'https://example.com/license-plate.jpg' })
+  @IsString()
   imageUrl: string;
 }
 
 class ClassifySeverityDto {
   @ApiProperty({ example: 'Head-on collision with multiple injuries' })
+  @IsString()
   description: string;
 
   @ApiProperty({ example: 2 })
+  @IsNumber()
   numberOfVehicles: number;
 
   @ApiProperty({ example: 3 })
+  @IsNumber()
   numberOfInjuries: number;
 
   @ApiProperty({ example: 0 })
+  @IsNumber()
   numberOfFatalities: number;
 
   @ApiProperty({ required: false, example: 'rainy' })
+  @IsOptional()
+  @IsString()
   weatherConditions?: string;
 
   @ApiProperty({ required: false, example: 'wet' })
+  @IsOptional()
+  @IsString()
   roadConditions?: string;
 }
 

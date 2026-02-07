@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface SeverityAnalysisResult {
   severity: number; // 0-100 severity score
@@ -17,7 +17,7 @@ export class AiService {
   constructor(private configService: ConfigService) {}
 
   /**
-   * Analyze accident images using OpenAI Vision to determine severity
+   * Analyze accident images using Google Gemini Vision to determine severity
    */
   async analyzeAccidentSeverity(
     imageUrls: string[],
@@ -27,36 +27,54 @@ export class AiService {
         `Analyzing ${imageUrls.length} images for accident severity`,
       );
 
-      const apiKey = this.configService.get<string>('OPENAI_API_KEY');
+      const apiKey = this.configService.get<string>('GEMINI_API_KEY');
       if (!apiKey) {
-        this.logger.warn('OpenAI API key not configured, using mock analysis');
+        this.logger.warn('Gemini API key not configured, using mock analysis');
         return this.getMockAnalysis();
       }
 
-      const openai = new OpenAI({ apiKey });
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Analyze this accident scene and provide: 1) Severity score (0-100), 2) Detailed analysis, 3) Detected injuries, 4) Vehicle damage description, 5) Recommended emergency services. Format response as JSON.',
-              },
-              ...imageUrls.map((url) => ({
-                type: 'image_url' as const,
-                image_url: { url },
-              })),
-            ],
-          },
-        ],
-        max_tokens: 500,
-      });
+      // Fetch images and convert to base64
+      const imageParts = await Promise.all(
+        imageUrls.map(async (url) => {
+          const response = await fetch(url);
+          const buffer = await response.arrayBuffer();
+          const base64 = Buffer.from(buffer).toString('base64');
+          const mimeType = response.headers.get('content-type') || 'image/jpeg';
+          return {
+            inlineData: {
+              data: base64,
+              mimeType,
+            },
+          };
+        }),
+      );
 
-      const content = response.choices[0]?.message?.content || '{}';
-      const parsed = JSON.parse(content) as {
+      const prompt = `Analyze this accident scene and provide a JSON response with the following structure:
+{
+  "severity": <number from 0-100>,
+  "analysis": "<detailed analysis>",
+  "detectedInjuries": ["<injury1>", "<injury2>"],
+  "vehicleDamage": "<damage description>",
+  "recommendedServices": ["<service1>", "<service2>"]
+}
+
+Assess the severity of the accident, identify visible injuries, describe vehicle damage, and recommend appropriate emergency services (e.g., police, ambulance, fire department).`;
+
+      const result = await model.generateContent([prompt, ...imageParts]);
+      const response = result.response;
+      const text = response.text();
+
+      // Extract JSON from markdown code blocks if present
+      let jsonText = text;
+      const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        jsonText = jsonMatch[1].trim();
+      }
+
+      const parsed = JSON.parse(jsonText) as {
         severity?: number;
         analysis?: string;
         detectedInjuries?: string[];
