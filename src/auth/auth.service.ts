@@ -82,61 +82,6 @@ export class AuthService {
     };
   }
 
-  async signUp(registerDto: RegisterDto) {
-    const { email, password, fullName, phoneNumber, role, username } =
-      registerDto;
-
-    // Check if user already exists
-    const existingUser = await this.usersRepository.findOne({
-      where: [{ email }, { username }],
-    });
-
-    if (existingUser) {
-      throw new ConflictException(
-        'User with this email or username already exists',
-      );
-    }
-
-    // Hash password
-    const hashedPassword = await this.hashData(password);
-
-    // Create user
-    const user = this.usersRepository.create({
-      fullName,
-      email,
-      username,
-      password: hashedPassword,
-      phoneNumber,
-      role: role || UserRole.USER,
-      isActive: true,
-    });
-
-    const savedUser: User = await this.usersRepository.save(user);
-
-    // Generate tokens
-    const tokens = await this.getTokens(
-      savedUser.id,
-      savedUser.email,
-      savedUser.role,
-      savedUser.username,
-    );
-
-    // Save refresh token
-    await this.saveRefreshToken(savedUser.id, tokens.refreshToken);
-
-    return {
-      success: true,
-      message: 'User registered successfully',
-      user: {
-        id: savedUser.id,
-        fullName: savedUser.fullName,
-        email: savedUser.email,
-        username: savedUser.username,
-        role: savedUser.role,
-      },
-      ...tokens,
-    };
-  }
 
   async signIn(loginDto: LoginDto) {
     const { email, password } = loginDto;
