@@ -2,7 +2,7 @@
 @accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMzNhZDlhZS0wZDJlLTQxYmEtODhmYy1iZDhlYWViZjg5Y2MiLCJlbWFpbCI6ImphbmUuc21pdGhAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImphbmVzbWl0aCIsImlhdCI6MTc3MDQwNjA3MSwiZXhwIjoxNzcxMjcwMDcxfQ.cH5l7FPTyChdnN63tfZ5bXLA-6jXhn9nCajqGtidR5k
 @refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMzNhZDlhZS0wZDJlLTQxYmEtODhmYy1iZDhlYWViZjg5Y2MiLCJlbWFpbCI6ImphbmUuc21pdGhAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImphbmVzbWl0aCIsImlhdCI6MTc3MDQwNjA3MSwiZXhwIjoxNzcxMjcwMDcxfQ.3Dtz79faApVtABxbOdzbdciWZOxHA3hJlwldqj1k3Rw
 @userId = c33ad9ae-0d2e-41ba-88fc-bd8eaebf89cc
-@accidentId = your-accident-id-here
+@accidentId = 4b420d5d-753c-4e06-9ccd-3d1cd5903ebf
 
 ### ==============================================
 ### AUTH ENDPOINTS
@@ -156,7 +156,7 @@ Content-Type: application/json
 {
   "description": "Two vehicle collision at intersection",
   "severity": "moderate",
-  "status": "pending",
+  "status": "reported",
   "latitude": 40.7128,
   "longitude": -74.0060,
   "locationAddress": "123 Main St, New York, NY",
@@ -242,7 +242,7 @@ Content-Type: application/json
   "model": "Camry",
   "year": 2020,
   "color": "Blue",
-  "type": "sedan",
+  "type": "car",
   "driverName": "John Smith",
   "driverLicenseNumber": "DL123456",
   "driverPhone": "+1234567890",

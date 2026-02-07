@@ -37,6 +37,20 @@ export class VehiclesController {
     return this.vehiclesService.findAll();
   }
 
+  @Get('accident/:accidentId')
+  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @ApiOperation({ summary: 'Get vehicles by accident ID' })
+  findByAccident(@Param('accidentId') accidentId: string) {
+    return this.vehiclesService.findByAccident(accidentId);
+  }
+
+  @Get('plate/:licensePlate')
+  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @ApiOperation({ summary: 'Get vehicle by license plate' })
+  findByLicensePlate(@Param('licensePlate') licensePlate: string) {
+    return this.vehiclesService.findByLicensePlate(licensePlate);
+  }
+
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.OFFICER)
   @ApiOperation({ summary: 'Get vehicle by ID (Admin/Officer)' })

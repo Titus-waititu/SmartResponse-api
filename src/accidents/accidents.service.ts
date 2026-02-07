@@ -70,7 +70,7 @@ export class AccidentsService {
     // 5. Auto-dispatch emergency services based on AI analysis
     const dispatchResult = await this.dispatchService.dispatchEmergencyServices(
       savedAccident.id,
-      createAccidentDto.userId || 'system',
+      createAccidentDto.reportedById || 'system',
       analysis.severity,
       {
         latitude: Number(createAccidentDto.latitude),

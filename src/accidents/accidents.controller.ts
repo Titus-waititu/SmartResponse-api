@@ -82,6 +82,34 @@ export class AccidentsController {
     return this.accidentsService.findAll();
   }
 
+  @Get('report/:reportNumber')
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @ApiOperation({ summary: 'Get accident by report number' })
+  findByReportNumber(@Param('reportNumber') reportNumber: string) {
+    return this.accidentsService.findByReportNumber(reportNumber);
+  }
+
+  @Get('status/:status')
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @ApiOperation({ summary: 'Get accidents by status' })
+  findByStatus(@Param('status') status: string) {
+    return this.accidentsService.findByStatus(status as any);
+  }
+
+  @Get('officer/:officerId')
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @ApiOperation({ summary: 'Get accidents by assigned officer' })
+  findByOfficer(@Param('officerId') officerId: string) {
+    return this.accidentsService.findByOfficer(officerId);
+  }
+
+  @Get('statistics')
+  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @ApiOperation({ summary: 'Get accident statistics' })
+  getStatistics() {
+    return this.accidentsService.getStatistics();
+  }
+
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
   @ApiOperation({
@@ -99,6 +127,20 @@ export class AccidentsController {
     @Body() updateAccidentDto: UpdateAccidentDto,
   ) {
     return this.accidentsService.update(id, updateAccidentDto);
+  }
+
+  @Patch(':id/assign-officer')
+  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @ApiOperation({ summary: 'Assign officer to accident' })
+  assignOfficer(@Param('id') id: string, @Body() body: { officerId: string }) {
+    return this.accidentsService.assignOfficer(id, body.officerId);
+  }
+
+  @Patch(':id/status')
+  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @ApiOperation({ summary: 'Update accident status' })
+  updateStatus(@Param('id') id: string, @Body() body: { status: string }) {
+    return this.accidentsService.updateStatus(id, body.status as any);
   }
 
   @Delete(':id')

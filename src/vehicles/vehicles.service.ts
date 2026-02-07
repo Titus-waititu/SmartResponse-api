@@ -42,6 +42,19 @@ export class VehiclesService {
     });
   }
 
+  async findByLicensePlate(licensePlate: string): Promise<Vehicle> {
+    const vehicle = await this.vehicleRepository.findOne({
+      where: { licensePlate },
+      relations: ['accident'],
+    });
+    if (!vehicle) {
+      throw new NotFoundException(
+        `Vehicle with license plate ${licensePlate} not found`,
+      );
+    }
+    return vehicle;
+  }
+
   async update(
     id: string,
     updateVehicleDto: UpdateVehicleDto,
