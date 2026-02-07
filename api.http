@@ -531,12 +531,40 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "name": "Monthly Accident Report",
-  "description": "Accident statistics for January 2026"
+  "accidentId": "{{accidentId}}",
+  "officerId": "{{userId}}",
+  "reportNumber": "RPT-2026-001",
+  "content": "Detailed investigation of the accident scene revealed that the collision occurred at the intersection of Main St and 5th Ave. Both vehicles were traveling at moderate speeds. Weather conditions were clear and road conditions were dry.",
+  "findings": "Driver of vehicle 1 failed to yield at the intersection. No evidence of alcohol or drug use. Both drivers were wearing seatbelts.",
+  "recommendations": "Consider installing additional traffic signals at this intersection to prevent future accidents."
 }
 
 ### Get all reports
 GET {{baseUrl}}/reports
+Authorization: Bearer {{accessToken}}
+
+### Get report by report number
+GET {{baseUrl}}/reports/report/RPT-2026-001
+Authorization: Bearer {{accessToken}}
+
+### Get reports by accident
+GET {{baseUrl}}/reports/accident/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
+### Get reports by officer
+GET {{baseUrl}}/reports/officer/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get all submitted reports
+GET {{baseUrl}}/reports/submitted
+Authorization: Bearer {{accessToken}}
+
+### Get all draft reports
+GET {{baseUrl}}/reports/draft
+Authorization: Bearer {{accessToken}}
+
+### Get report statistics
+GET {{baseUrl}}/reports/statistics
 Authorization: Bearer {{accessToken}}
 
 ### Get report by ID
@@ -549,9 +577,14 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "name": "Updated Monthly Report",
-  "description": "Updated accident statistics"
+  "content": "Updated detailed investigation report with additional findings.",
+  "findings": "Updated findings after further investigation",
+  "recommendations": "Updated safety recommendations"
 }
+
+### Submit report
+PATCH {{baseUrl}}/reports/report-id-here/submit
+Authorization: Bearer {{accessToken}}
 
 ### Delete report
 DELETE {{baseUrl}}/reports/report-id-here
