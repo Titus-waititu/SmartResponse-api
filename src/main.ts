@@ -15,12 +15,14 @@ async function bootstrap() {
     }),
   );
 
-  // Set global API prefix with versioning
-  app.setGlobalPrefix('api/v1');
+  // Set global API prefix with versioning, excluding metrics endpoint
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['metrics'],
+  });
 
   // Enable CORS
   app.enableCors({
-    origin: '*', 
+    origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization',
   });
