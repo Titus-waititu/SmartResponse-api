@@ -18,6 +18,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return true;
     }
 
+    // Allow unauthenticated access to /metrics endpoint
+    const request = context.switchToHttp().getRequest();
+    if (request.url === 'api/v1/metrics') {
+      return true;
+    }
+
     return super.canActivate(context);
   }
 }

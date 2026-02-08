@@ -20,6 +20,7 @@ import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { createKeyv, Keyv } from '@keyv/redis';
 import { CacheableMemory } from 'cacheable';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 @Module({
   imports: [
@@ -83,6 +84,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
         },
       ],
     }),
+    PrometheusModule.register({
+        defaultMetrics: {
+          enabled: true,
+        },
+        path: '/metrics',
+      }),
   ],
   controllers: [],
   providers: [
