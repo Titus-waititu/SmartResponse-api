@@ -27,14 +27,23 @@ This document describes the multi-session authentication feature that allows use
 
 ### 3. Device Recognition
 
-- Automatically detects device type from user agent:
-  - iPhone
-  - iPad
-  - Android Device
-  - Windows PC
-  - Mac
-  - Linux PC
-  - Unknown Device (fallback)
+- Uses **ua-parser-js** library for production-grade device detection
+- Provides detailed device information:
+  - **Mobile Devices**: Full vendor and model (e.g., "Apple iPhone 14", "Samsung Galaxy S23")
+  - **Tablets**: Vendor and type (e.g., "Apple iPad", "Samsung Tablet")
+  - **Desktop**: Browser and OS combination (e.g., "Chrome on Windows 11", "Safari on macOS")
+  - **Fallback**: OS-based or browser-based identification
+- Handles edge cases and parsing errors gracefully
+- More accurate and comprehensive than simple string matching
+
+**Example Device Names:**
+
+- `Apple iPhone 14`
+- `Samsung Galaxy S23`
+- `Chrome on Windows 11`
+- `Safari on macOS Sonoma`
+- `Firefox on Ubuntu 22.04`
+- `Edge Browser`
 
 ### 4. Session Management Endpoints
 
@@ -189,6 +198,26 @@ Authorization: Bearer <access-token>
 }
 ```
 
+## Dependencies
+
+This feature requires the following npm packages:
+
+### Production Dependencies
+
+- **ua-parser-js** (^2.0.9) - Production-grade user agent parser for accurate device detection
+  ```bash
+  pnpm add ua-parser-js
+  ```
+
+### Development Dependencies
+
+- **@types/ua-parser-js** (^0.7.39) - TypeScript type definitions
+  ```bash
+  pnpm add -D @types/ua-parser-js
+  ```
+
+All dependencies are already installed if you've followed the implementation steps.
+
 ## Migration Instructions
 
 ### Step 1: Run the Database Migration
@@ -240,35 +269,36 @@ ALTER TABLE users DROP COLUMN IF EXISTS hashed_refresh_token;
 
 ## Future Enhancements
 
-### 1. Enhanced Device Detection
-
-- Use a library like `ua-parser-js` for better device/browser detection
-- Store browser name and version separately
-
-### 2. Session Notifications
+### 1. Session Notifications
 
 - Email notifications when new device logs in
 - Push notifications for suspicious login attempts
 
-### 3. Geolocation
+### 2. Geolocation
 
 - Add geolocation data based on IP address
 - Show login location in session list
 
-### 4. Session Limits
+### 3. Session Limits
 
 - Implement maximum concurrent sessions per user
 - Automatically revoke oldest session when limit is reached
 
-### 5. Session Activity Log
+### 4. Session Activity Log
 
 - Track detailed activity within each session
 - Show last action performed in each session
 
-### 6. Trusted Devices
+### 5. Trusted Devices
 
 - Allow users to mark devices as trusted
 - Skip 2FA for trusted devices
+
+### 6. Advanced Device Analytics
+
+- Store browser name and version separately in database
+- Add CPU architecture and engine information
+- Create analytics dashboard for device usage patterns
 
 ## Code Structure
 

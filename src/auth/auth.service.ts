@@ -8,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { UAParser } from 'ua-parser-js';
 import {
   LoginDto,
   ChangePasswordDto,
@@ -63,15 +64,59 @@ export class AuthService {
   private parseDeviceName(userAgent?: string): string {
     if (!userAgent) return 'Unknown Device';
 
-    // Simple device detection logic
-    if (userAgent.includes('iPhone')) return 'iPhone';
-    if (userAgent.includes('iPad')) return 'iPad';
-    if (userAgent.includes('Android')) return 'Android Device';
-    if (userAgent.includes('Windows')) return 'Windows PC';
-    if (userAgent.includes('Macintosh')) return 'Mac';
-    if (userAgent.includes('Linux')) return 'Linux PC';
+    try {
+      const parser = new UAParser(userAgent);
+      const result = parser.getResult();
 
-    return 'Unknown Device';
+      const device = result.device;
+      const os = result.os;
+      const browser = result.browser;
+
+      // Priority 1: If device type is known (mobile, tablet, etc.)
+      if (device.type) {
+        if (device.vendor && device.model) {
+          // e.g., "Apple iPhone 14" or "Samsung Galaxy S23"
+          return `${device.vendor} ${device.model}`.trim();
+        }
+        if (device.vendor) {
+          // e.g., "Apple Mobile" or "Samsung Tablet"
+          return `${device.vendor} ${this.capitalizeFirst(device.type)}`.trim();
+        }
+        if (device.model) {
+          // e.g., "iPhone" or "Galaxy S23"
+          return device.model;
+        }
+        // e.g., "Mobile Device" or "Tablet"
+        return `${this.capitalizeFirst(device.type)} Device`;
+      }
+
+      // Priority 2: Desktop - use OS and Browser
+      if (os.name && browser.name) {
+        // e.g., "Chrome on Windows 11" or "Safari on macOS"
+        return `${browser.name} on ${os.name}${os.version ? ' ' + os.version : ''}`;
+      }
+
+      // Priority 3: OS only
+      if (os.name) {
+        return `${os.name}${os.version ? ' ' + os.version : ''} Device`;
+      }
+
+      // Priority 4: Browser only
+      if (browser.name) {
+        return `${browser.name} Browser`;
+      }
+
+      // Fallback
+      return 'Unknown Device';
+    } catch (error) {
+      console.error('Error parsing user agent:', error);
+      return 'Unknown Device';
+    }
+  }
+
+  private capitalizeFirst(str: string): string {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 
   async getTokens(id: string, email: string, role: string, username: string) {
