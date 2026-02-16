@@ -16,6 +16,7 @@ import {
 } from './dto/create-auth.dto';
 import { UpdateProfileDto } from './dto/update-auth.dto';
 import { User } from '../users/entities/user.entity';
+import { Session } from './entities/session.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -23,6 +24,7 @@ import { Repository } from 'typeorm';
 export class AuthService {
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
+    @InjectRepository(Session) private sessionsRepository: Repository<Session>,
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
@@ -32,11 +34,44 @@ export class AuthService {
     return await bcrypt.hash(data, salt);
   }
 
-  private async saveRefreshToken(userId: string, refreshToken: string) {
+  private async saveRefreshToken(
+    userId: string,
+    refreshToken: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<string> {
     const hashedRefreshToken = await this.hashData(refreshToken);
-    await this.usersRepository.update(userId, {
-      hashedRefreshToken: hashedRefreshToken,
+
+    // Parse device name from user agent
+    const deviceName = this.parseDeviceName(userAgent);
+
+    // Create new session
+    const session = this.sessionsRepository.create({
+      userId,
+      hashedRefreshToken,
+      ipAddress,
+      userAgent,
+      deviceName,
+      isActive: true,
+      lastActivity: new Date(),
     });
+
+    const savedSession = await this.sessionsRepository.save(session);
+    return savedSession.id;
+  }
+
+  private parseDeviceName(userAgent?: string): string {
+    if (!userAgent) return 'Unknown Device';
+
+    // Simple device detection logic
+    if (userAgent.includes('iPhone')) return 'iPhone';
+    if (userAgent.includes('iPad')) return 'iPad';
+    if (userAgent.includes('Android')) return 'Android Device';
+    if (userAgent.includes('Windows')) return 'Windows PC';
+    if (userAgent.includes('Macintosh')) return 'Mac';
+    if (userAgent.includes('Linux')) return 'Linux PC';
+
+    return 'Unknown Device';
   }
 
   async getTokens(id: string, email: string, role: string, username: string) {
@@ -80,7 +115,7 @@ export class AuthService {
     };
   }
 
-  async signIn(loginDto: LoginDto) {
+  async signIn(loginDto: LoginDto, ipAddress?: string, userAgent?: string) {
     const { email, password } = loginDto;
 
     const user = await this.usersRepository.findOne({
@@ -92,7 +127,6 @@ export class AuthService {
         'fullName',
         'role',
         'isActive',
-        'hashedRefreshToken',
         'username',
       ],
     });
@@ -125,7 +159,14 @@ export class AuthService {
       user.role,
       user.fullName,
     );
-    await this.saveRefreshToken(user.id, tokens.refreshToken);
+
+    const sessionId = await this.saveRefreshToken(
+      user.id,
+      tokens.refreshToken,
+      ipAddress,
+      userAgent,
+    );
+
     return {
       success: true,
       message: 'Login successful',
@@ -139,37 +180,45 @@ export class AuthService {
       tokens: {
         ...tokens,
       },
+      sessionId,
     };
   }
 
   async refreshTokens(id: string, refreshToken: string) {
     const user = await this.usersRepository.findOne({
       where: { id },
-      select: [
-        'id',
-        'email',
-        'fullName',
-        'role',
-        'hashedRefreshToken',
-        'username',
-      ],
+      select: ['id', 'email', 'fullName', 'role', 'username'],
     });
 
-    if (!user || !user.hashedRefreshToken) {
+    if (!user) {
       return {
         success: false,
-        message: 'User not found or not logged in',
+        message: 'User not found',
       };
     }
 
-    const isRefreshTokenValid = await bcrypt.compare(
-      refreshToken,
-      user.hashedRefreshToken,
-    );
-    if (!isRefreshTokenValid) {
+    // Find the session with matching refresh token
+    const sessions = await this.sessionsRepository.find({
+      where: { userId: id, isActive: true },
+      select: ['id', 'hashedRefreshToken', 'userId'],
+    });
+
+    let validSession: Session | null = null;
+    for (const session of sessions) {
+      const isValid = await bcrypt.compare(
+        refreshToken,
+        session.hashedRefreshToken,
+      );
+      if (isValid) {
+        validSession = session;
+        break;
+      }
+    }
+
+    if (!validSession) {
       return {
         success: false,
-        message: 'Invalid refresh token',
+        message: 'Invalid refresh token or session expired',
       };
     }
 
@@ -179,7 +228,14 @@ export class AuthService {
       user.role,
       user.username,
     );
-    await this.saveRefreshToken(user.id, tokens.refreshToken);
+
+    // Update the session with new refresh token and last activity
+    const hashedRefreshToken = await this.hashData(tokens.refreshToken);
+    await this.sessionsRepository.update(validSession.id, {
+      hashedRefreshToken,
+      lastActivity: new Date(),
+    });
+
     return {
       success: true,
       message: 'Tokens refreshed successfully',
@@ -187,26 +243,53 @@ export class AuthService {
     };
   }
 
-  async logout(userId: string) {
+  async logout(userId: string, sessionId?: string) {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
-      select: ['id', 'email', 'role', 'hashedRefreshToken'],
+      select: ['id'],
     });
 
-    if (!user || !user.hashedRefreshToken) {
+    if (!user) {
       return {
         success: false,
-        message: 'User not found or not logged in',
+        message: 'User not found',
       };
     }
 
-    await this.usersRepository.update(userId, {
-      hashedRefreshToken: undefined,
-    });
-    return {
-      success: true,
-      message: 'Logout successful',
-    };
+    if (sessionId) {
+      // Logout from specific session
+      const session = await this.sessionsRepository.findOne({
+        where: { id: sessionId, userId },
+      });
+
+      if (!session) {
+        return {
+          success: false,
+          message: 'Session not found',
+        };
+      }
+
+      await this.sessionsRepository.update(sessionId, {
+        isActive: false,
+      });
+
+      return {
+        success: true,
+        message: 'Logged out from this device successfully',
+      };
+    } else {
+      // Logout from all sessions (current device only - we'll need sessionId from token)
+      // For now, just mark all sessions as inactive
+      await this.sessionsRepository.update(
+        { userId, isActive: true },
+        { isActive: false },
+      );
+
+      return {
+        success: true,
+        message: 'Logout successful',
+      };
+    }
   }
 
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
@@ -392,5 +475,70 @@ export class AuthService {
       select: ['id', 'fullName', 'email', 'role'],
     });
     return user;
+  }
+
+  // Session Management Methods
+  async getActiveSessions(userId: string) {
+    const sessions = await this.sessionsRepository.find({
+      where: { userId, isActive: true },
+      select: [
+        'id',
+        'ipAddress',
+        'userAgent',
+        'deviceName',
+        'isActive',
+        'lastActivity',
+        'createdAt',
+      ],
+      order: { lastActivity: 'DESC' },
+    });
+
+    return {
+      success: true,
+      message: 'Active sessions retrieved successfully',
+      sessions: sessions.map((session) => ({
+        id: session.id,
+        ipAddress: session.ipAddress,
+        userAgent: session.userAgent,
+        deviceName: session.deviceName,
+        isActive: session.isActive,
+        lastActivity: session.lastActivity,
+        createdAt: session.createdAt,
+      })),
+    };
+  }
+
+  async logoutFromSession(userId: string, sessionId: string) {
+    const session = await this.sessionsRepository.findOne({
+      where: { id: sessionId, userId },
+    });
+
+    if (!session) {
+      return {
+        success: false,
+        message: 'Session not found',
+      };
+    }
+
+    await this.sessionsRepository.update(sessionId, {
+      isActive: false,
+    });
+
+    return {
+      success: true,
+      message: 'Session terminated successfully',
+    };
+  }
+
+  async logoutFromAllSessions(userId: string) {
+    await this.sessionsRepository.update(
+      { userId, isActive: true },
+      { isActive: false },
+    );
+
+    return {
+      success: true,
+      message: 'All sessions terminated successfully',
+    };
   }
 }

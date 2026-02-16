@@ -4,9 +4,12 @@ import {
   Post,
   Body,
   Patch,
+  Param,
+  Delete,
   UseGuards,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,6 +17,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Request } from 'express';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
@@ -39,8 +43,18 @@ export class AuthController {
   @ApiOperation({ summary: 'Sign in to the system' })
   @ApiResponse({ status: 200, description: 'User signed in successfully' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async signIn(@Body() loginDto: LoginDto) {
-    return this.authService.signIn(loginDto);
+  async signIn(@Body() loginDto: LoginDto, @Req() req: Request) {
+    const ipAddress = this.getIpAddress(req);
+    const userAgent = req.headers['user-agent'];
+    return this.authService.signIn(loginDto, ipAddress, userAgent);
+  }
+
+  private getIpAddress(req: Request): string {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string') {
+      return forwarded.split(',')[0].trim();
+    }
+    return req.ip || req.socket.remoteAddress || 'unknown';
   }
 
   @Public()
@@ -117,5 +131,41 @@ export class AuthController {
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
     return this.authService.updateProfile(userId, updateProfileDto);
+  }
+
+  @Get('sessions')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all active sessions for current user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Active sessions retrieved successfully',
+  })
+  async getActiveSessions(@CurrentUser('userId') userId: string) {
+    return this.authService.getActiveSessions(userId);
+  }
+
+  @Delete('sessions/:sessionId')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout from a specific session' })
+  @ApiResponse({ status: 200, description: 'Session terminated successfully' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  async logoutFromSession(
+    @CurrentUser('userId') userId: string,
+    @Param('sessionId') sessionId: string,
+  ) {
+    return this.authService.logoutFromSession(userId, sessionId);
+  }
+
+  @Delete('sessions')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout from all sessions' })
+  @ApiResponse({
+    status: 200,
+    description: 'All sessions terminated successfully',
+  })
+  async logoutFromAllSessions(@CurrentUser('userId') userId: string) {
+    return this.authService.logoutFromAllSessions(userId);
   }
 }
