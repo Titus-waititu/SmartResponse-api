@@ -32,7 +32,6 @@ async function bootstrap() {
     .setTitle('Smart Accident Report System API')
     .setDescription('API documentation for the Smart Accident Report System')
     .setVersion('1.0')
-    .addTag('auth', 'Authentication endpoints')
     .addBearerAuth()
     .build();
 

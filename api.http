@@ -98,6 +98,20 @@ Content-Type: application/json
   "isActive": true
 }
 
+### Create an officer user (Admin)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "fullName": "Officer Mike",
+  "email": "officer.mike@example.com",
+  "username": "officermike",
+  "password": "Password123!",
+  "phoneNumber": "+1234567793",
+  "role": "officer",
+  "isActive": true
+}
+
 ### Get all users
 GET {{baseUrl}}/users
 Authorization: Bearer {{accessToken}}
