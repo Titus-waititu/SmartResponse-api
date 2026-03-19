@@ -3,11 +3,17 @@
 @refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjMzNhZDlhZS0wZDJlLTQxYmEtODhmYy1iZDhlYWViZjg5Y2MiLCJlbWFpbCI6ImphbmUuc21pdGhAZXhhbXBsZS5jb20iLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImphbmVzbWl0aCIsImlhdCI6MTc3MDQwNjA3MSwiZXhwIjoxNzcxMjcwMDcxfQ.3Dtz79faApVtABxbOdzbdciWZOxHA3hJlwldqj1k3Rw
 @userId = c33ad9ae-0d2e-41ba-88fc-bd8eaebf89cc
 @accidentId = 4b420d5d-753c-4e06-9ccd-3d1cd5903ebf
+@sessionId = 8f192b-819a
+@reportId = 12fa
+@vehicleId = 55ba
+@mediaId = 66ad
+@locationId = 77be
+@notificationId = 88cf
+@serviceId = 99de
 
 ### ==============================================
 ### AUTH ENDPOINTS
 ### ==============================================
-
 ### Sign in
 POST {{baseUrl}}/auth/signin
 Content-Type: application/json
@@ -37,7 +43,7 @@ Content-Type: application/json
 }
 
 ### Change password
-PATCH {{baseUrl}}/auth/change-password
+POST {{baseUrl}}/auth/change-password
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
@@ -63,14 +69,26 @@ Content-Type: application/json
   "newPassword": "NewPassword123!"
 }
 
+### Get all sessions
+GET {{baseUrl}}/auth/sessions
+Authorization: Bearer {{accessToken}}
+
+### Delete a session
+DELETE {{baseUrl}}/auth/sessions/{{sessionId}}
+Authorization: Bearer {{accessToken}}
+
+### Delete all sessions
+DELETE {{baseUrl}}/auth/sessions
+Authorization: Bearer {{accessToken}}
+
 ### Logout
 POST {{baseUrl}}/auth/logout
 Authorization: Bearer {{accessToken}}
 
+
 ### ==============================================
 ### USERS ENDPOINTS
 ### ==============================================
-
 ### Register/Create new user
 POST {{baseUrl}}/users
 Content-Type: application/json
@@ -84,40 +102,20 @@ Content-Type: application/json
   "isActive": true
 }
 
-### Create user (Admin)
-POST {{baseUrl}}/users
-Content-Type: application/json
-
-{
-  "fullName": "Jane Smith",
-  "email": "jane.smith@example.com",
-  "username": "janesmith",
-  "password": "Password123!",
-  "phoneNumber": "+1234567792",
-  "role": "officer",
-  "isActive": true
-}
-
-### Create an officer user (Admin)
-POST {{baseUrl}}/users
-Content-Type: application/json
-
-{
-  "fullName": "Officer Mike",
-  "email": "officer.mike@example.com",
-  "username": "officermike",
-  "password": "Password123!",
-  "phoneNumber": "+1234567793",
-  "role": "officer",
-  "isActive": true
-}
-
 ### Get all users
 GET {{baseUrl}}/users
 Authorization: Bearer {{accessToken}}
 
-### Get all users with pagination and filters
-GET {{baseUrl}}/users?page=1&limit=10&role=user&isActive=true&search=john
+### Get user statistics
+GET {{baseUrl}}/users/stats
+Authorization: Bearer {{accessToken}}
+
+### Get active users
+GET {{baseUrl}}/users/active
+Authorization: Bearer {{accessToken}}
+
+### Get users by role
+GET {{baseUrl}}/users/role/officer
 Authorization: Bearer {{accessToken}}
 
 ### Get user by ID
@@ -134,10 +132,6 @@ Content-Type: application/json
   "phoneNumber": "+1234567893"
 }
 
-### Delete user
-DELETE {{baseUrl}}/users/{{userId}}
-Authorization: Bearer {{accessToken}}
-
 ### Deactivate user
 PATCH {{baseUrl}}/users/{{userId}}/deactivate
 Authorization: Bearer {{accessToken}}
@@ -146,49 +140,37 @@ Authorization: Bearer {{accessToken}}
 PATCH {{baseUrl}}/users/{{userId}}/activate
 Authorization: Bearer {{accessToken}}
 
-### Get users by role
-GET {{baseUrl}}/users/role/officer
+### Delete user
+DELETE {{baseUrl}}/users/{{userId}}
 Authorization: Bearer {{accessToken}}
 
-### Get active users
-GET {{baseUrl}}/users/active
-Authorization: Bearer {{accessToken}}
-
-### Get user statistics
-GET {{baseUrl}}/users/stats
-Authorization: Bearer {{accessToken}}
 
 ### ==============================================
 ### ACCIDENTS ENDPOINTS
 ### ==============================================
-
 ### Create accident
 POST {{baseUrl}}/accidents
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "description": "Two vehicle collision at intersection",
+  "description": "Two vehicle collision",
   "severity": "moderate",
-  "status": "reported",
-  "latitude": 40.7128,
-  "longitude": -74.0060,
-  "locationAddress": "123 Main St, New York, NY",
-  "accidentDate": "2026-01-29T10:30:00Z",
-  "weatherConditions": "Clear",
-  "roadConditions": "Dry",
-  "numberOfVehicles": 2,
-  "numberOfInjuries": 1,
-  "numberOfFatalities": 0,
-  "reportedById": "{{userId}}"
+  "status": "reported"
+}
+
+### Create accident report directly
+POST {{baseUrl}}/accidents/report
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "reportData": {}
 }
 
 ### Get all accidents
 GET {{baseUrl}}/accidents
-Authorization: Bearer {{accessToken}}
-
-### Get accident by ID
-GET {{baseUrl}}/accidents/{{accidentId}}
 Authorization: Bearer {{accessToken}}
 
 ### Get accident by report number
@@ -203,6 +185,14 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/accidents/officer/{{userId}}
 Authorization: Bearer {{accessToken}}
 
+### Get accident statistics
+GET {{baseUrl}}/accidents/statistics
+Authorization: Bearer {{accessToken}}
+
+### Get accident by ID
+GET {{baseUrl}}/accidents/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
 ### Update accident
 PATCH {{baseUrl}}/accidents/{{accidentId}}
 Authorization: Bearer {{accessToken}}
@@ -210,8 +200,7 @@ Content-Type: application/json
 
 {
   "description": "Updated description",
-  "severity": "severe",
-  "numberOfInjuries": 2
+  "severity": "severe"
 }
 
 ### Assign officer to accident
@@ -236,247 +225,100 @@ Content-Type: application/json
 DELETE {{baseUrl}}/accidents/{{accidentId}}
 Authorization: Bearer {{accessToken}}
 
-### Get accident statistics
-GET {{baseUrl}}/accidents/statistics
-Authorization: Bearer {{accessToken}}
 
 ### ==============================================
-### VEHICLES ENDPOINTS
+### AI ENDPOINTS
 ### ==============================================
-
-### Create vehicle
-POST {{baseUrl}}/vehicles
+### Analyze accident with AI
+POST {{baseUrl}}/ai/analyze-accident
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
   "accidentId": "{{accidentId}}",
-  "licensePlate": "ABC123",
-  "make": "Toyota",
-  "model": "Camry",
-  "year": 2020,
-  "color": "Blue",
-  "type": "car",
-  "driverName": "John Smith",
-  "driverLicenseNumber": "DL123456",
-  "driverPhone": "+1234567890",
-  "insuranceCompany": "State Farm",
-  "insurancePolicyNumber": "POL123456",
-  "damage": "Front bumper damage"
+  "description": "Collision at intersection"
 }
 
-### Get all vehicles
-GET {{baseUrl}}/vehicles
-Authorization: Bearer {{accessToken}}
-
-### Get vehicle by ID
-GET {{baseUrl}}/vehicles/vehicle-id-here
-Authorization: Bearer {{accessToken}}
-
-### Get vehicles by accident
-GET {{baseUrl}}/vehicles/accident/{{accidentId}}
-Authorization: Bearer {{accessToken}}
-
-### Get vehicle by license plate
-GET {{baseUrl}}/vehicles/plate/ABC123
-Authorization: Bearer {{accessToken}}
-
-### Update vehicle
-PATCH {{baseUrl}}/vehicles/vehicle-id-here
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "damage": "Front bumper and right fender damage",
-  "color": "Dark Blue"
-}
-
-### Delete vehicle
-DELETE {{baseUrl}}/vehicles/vehicle-id-here
-Authorization: Bearer {{accessToken}}
-
-### ==============================================
-### MEDIA ENDPOINTS
-### ==============================================
-
-### Create media
-POST {{baseUrl}}/media
+### Generate accident report with AI
+POST {{baseUrl}}/ai/generate-report
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
   "accidentId": "{{accidentId}}",
-  "type": "image",
-  "fileName": "accident_photo_1.jpg",
-  "fileUrl": "https://storage.example.com/accidents/photo1.jpg",
-  "fileSize": 2048576,
-  "mimeType": "image/jpeg",
-  "description": "Front view of damaged vehicle",
-  "uploadedById": "{{userId}}"
+  "includeAnalysis": true
 }
 
-### Get all media
-GET {{baseUrl}}/media
-Authorization: Bearer {{accessToken}}
-
-### Get media by ID
-GET {{baseUrl}}/media/media-id-here
-Authorization: Bearer {{accessToken}}
-
-### Get media by accident
-GET {{baseUrl}}/media/accident/{{accidentId}}
-Authorization: Bearer {{accessToken}}
-
-### Get media by type
-GET {{baseUrl}}/media/type/image
-Authorization: Bearer {{accessToken}}
-
-### Update media
-PATCH {{baseUrl}}/media/media-id-here
+### Extract text from image
+POST {{baseUrl}}/ai/extract-text
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "description": "Updated description - Front view showing license plate"
+  "imageUrl": "https://storage.example.com/license_plate.jpg"
 }
 
-### Delete media
-DELETE {{baseUrl}}/media/media-id-here
-Authorization: Bearer {{accessToken}}
-
-### ==============================================
-### LOCATIONS ENDPOINTS
-### ==============================================
-
-### Create location
-POST {{baseUrl}}/locations
+### Classify accident severity
+POST {{baseUrl}}/ai/classify-severity
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "name": "Downtown Intersection",
-  "description": "Busy intersection with traffic lights",
-  "latitude": 40.7128,
-  "longitude": -74.0060,
-  "address": "123 Main St",
-  "city": "New York",
-  "state": "NY",
-  "postalCode": "10001",
-  "country": "USA",
-  "isActive": true
+  "description": "Single vehicle collision with guardrail"
 }
 
-### Get all locations
-GET {{baseUrl}}/locations
+### Get AI insights for accident
+GET {{baseUrl}}/ai/insights/{{accidentId}}
 Authorization: Bearer {{accessToken}}
 
-### Get location by ID
-GET {{baseUrl}}/locations/location-id-here
-Authorization: Bearer {{accessToken}}
 
-### Get locations by city
-GET {{baseUrl}}/locations/city/New York
-Authorization: Bearer {{accessToken}}
-
-### Find nearby locations
-GET {{baseUrl}}/locations/nearby?latitude=40.7128&longitude=-74.0060&radius=5
-Authorization: Bearer {{accessToken}}
-
-### Update location
-PATCH {{baseUrl}}/locations/location-id-here
+### ==============================================
+### DISPATCH ENDPOINTS
+### ==============================================
+### Manual dispatch emergency services
+POST {{baseUrl}}/dispatch/manual
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "description": "Updated description - High traffic area",
-  "isActive": true
-}
-
-### Deactivate location
-PATCH {{baseUrl}}/locations/location-id-here/deactivate
-Authorization: Bearer {{accessToken}}
-
-### Delete location
-DELETE {{baseUrl}}/locations/location-id-here
-Authorization: Bearer {{accessToken}}
-
-### ==============================================
-### NOTIFICATIONS ENDPOINTS
-### ==============================================
-
-### Create notification
-POST {{baseUrl}}/notifications
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
+  "accidentId": "{{accidentId}}",
   "userId": "{{userId}}",
-  "type": "accident_assigned",
-  "title": "New Accident Assigned",
-  "message": "You have been assigned to accident report ACC-20260129-001",
-  "priority": "high",
-  "accidentId": "{{accidentId}}"
+  "severity": 75
 }
 
-### Get all notifications
-GET {{baseUrl}}/notifications
+### Get active dispatches
+GET {{baseUrl}}/dispatch/active
 Authorization: Bearer {{accessToken}}
 
-### Get notification by ID
-GET {{baseUrl}}/notifications/notification-id-here
+### Get dispatches by accident
+GET {{baseUrl}}/dispatch/accident/{{accidentId}}
 Authorization: Bearer {{accessToken}}
 
-### Get notifications by user
-GET {{baseUrl}}/notifications/user/{{userId}}
+### Get pending dispatches
+GET {{baseUrl}}/dispatch/pending
 Authorization: Bearer {{accessToken}}
 
-### Get unread notifications for user
-GET {{baseUrl}}/notifications/user/{{userId}}/unread
+### Get completed dispatches
+GET {{baseUrl}}/dispatch/completed
 Authorization: Bearer {{accessToken}}
 
-### Get unread notification count
-GET {{baseUrl}}/notifications/user/{{userId}}/unread/count
+### Get dispatch statistics
+GET {{baseUrl}}/dispatch/statistics
 Authorization: Bearer {{accessToken}}
 
-### Mark notification as read
-PATCH {{baseUrl}}/notifications/notification-id-here/read
-Authorization: Bearer {{accessToken}}
-
-### Mark all notifications as read for user
-PATCH {{baseUrl}}/notifications/user/{{userId}}/read-all
-Authorization: Bearer {{accessToken}}
-
-### Update notification
-PATCH {{baseUrl}}/notifications/notification-id-here
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "priority": "medium"
-}
-
-### Delete notification
-DELETE {{baseUrl}}/notifications/notification-id-here
-Authorization: Bearer {{accessToken}}
 
 ### ==============================================
 ### EMERGENCY SERVICES ENDPOINTS
 ### ==============================================
-
 ### Create emergency service
 POST {{baseUrl}}/emergency-services
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "accidentId": "{{accidentId}}",
   "type": "ambulance",
   "status": "dispatched",
-  "serviceProvider": "City Ambulance Service",
-  "contactNumber": "+1234567890",
-  "dispatchedAt": "2026-01-29T10:35:00Z",
-  "responderId": "{{userId}}",
-  "notes": "Patient with minor injuries, transported to City Hospital"
+  "serviceProvider": "City Ambulance"
 }
 
 ### Get all emergency services
@@ -484,61 +326,134 @@ GET {{baseUrl}}/emergency-services
 Authorization: Bearer {{accessToken}}
 
 ### Get emergency service by ID
-GET {{baseUrl}}/emergency-services/service-id-here
-Authorization: Bearer {{accessToken}}
-
-### Get emergency services by accident
-GET {{baseUrl}}/emergency-services/accident/{{accidentId}}
-Authorization: Bearer {{accessToken}}
-
-### Get emergency services by status
-GET {{baseUrl}}/emergency-services/status/dispatched
-Authorization: Bearer {{accessToken}}
-
-### Get emergency services by responder
-GET {{baseUrl}}/emergency-services/responder/{{userId}}
-Authorization: Bearer {{accessToken}}
-
-### Get active emergency services
-GET {{baseUrl}}/emergency-services/active
+GET {{baseUrl}}/emergency-services/{{serviceId}}
 Authorization: Bearer {{accessToken}}
 
 ### Update emergency service
-PATCH {{baseUrl}}/emergency-services/service-id-here
+PATCH {{baseUrl}}/emergency-services/{{serviceId}}
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "notes": "Patient stabilized and transported successfully",
   "status": "completed"
 }
 
-### Update emergency service status
-PATCH {{baseUrl}}/emergency-services/service-id-here/status
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "status": "arrived"
-}
-
-### Assign responder to emergency service
-PATCH {{baseUrl}}/emergency-services/service-id-here/assign-responder
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "responderId": "{{userId}}"
-}
-
 ### Delete emergency service
-DELETE {{baseUrl}}/emergency-services/service-id-here
+DELETE {{baseUrl}}/emergency-services/{{serviceId}}
 Authorization: Bearer {{accessToken}}
+
+
+### ==============================================
+### LOCATIONS ENDPOINTS
+### ==============================================
+### Create location
+POST {{baseUrl}}/locations
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Downtown Intersection",
+  "latitude": 40.7128,
+  "longitude": -74.0060
+}
+
+### Get all locations
+GET {{baseUrl}}/locations
+Authorization: Bearer {{accessToken}}
+
+### Get location by ID
+GET {{baseUrl}}/locations/{{locationId}}
+Authorization: Bearer {{accessToken}}
+
+### Update location
+PATCH {{baseUrl}}/locations/{{locationId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated description"
+}
+
+### Delete location
+DELETE {{baseUrl}}/locations/{{locationId}}
+Authorization: Bearer {{accessToken}}
+
+
+### ==============================================
+### MEDIA ENDPOINTS
+### ==============================================
+### Create media entry
+POST {{baseUrl}}/media
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "type": "image",
+  "fileUrl": "https://example.com/image.jpg"
+}
+
+### Get all media
+GET {{baseUrl}}/media
+Authorization: Bearer {{accessToken}}
+
+### Get media by ID
+GET {{baseUrl}}/media/{{mediaId}}
+Authorization: Bearer {{accessToken}}
+
+### Update media
+PATCH {{baseUrl}}/media/{{mediaId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "description": "Front view"
+}
+
+### Delete media
+DELETE {{baseUrl}}/media/{{mediaId}}
+Authorization: Bearer {{accessToken}}
+
+
+### ==============================================
+### NOTIFICATIONS ENDPOINTS
+### ==============================================
+### Create notification
+POST {{baseUrl}}/notifications
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "type": "alert",
+  "message": "New assignment"
+}
+
+### Get all notifications
+GET {{baseUrl}}/notifications
+Authorization: Bearer {{accessToken}}
+
+### Get notification by ID
+GET {{baseUrl}}/notifications/{{notificationId}}
+Authorization: Bearer {{accessToken}}
+
+### Update notification
+PATCH {{baseUrl}}/notifications/{{notificationId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "isRead": true
+}
+
+### Delete notification
+DELETE {{baseUrl}}/notifications/{{notificationId}}
+Authorization: Bearer {{accessToken}}
+
 
 ### ==============================================
 ### REPORTS ENDPOINTS
 ### ==============================================
-
 ### Create report
 POST {{baseUrl}}/reports
 Authorization: Bearer {{accessToken}}
@@ -547,10 +462,7 @@ Content-Type: application/json
 {
   "accidentId": "{{accidentId}}",
   "officerId": "{{userId}}",
-  "reportNumber": "RPT-2026-001",
-  "content": "Detailed investigation of the accident scene revealed that the collision occurred at the intersection of Main St and 5th Ave. Both vehicles were traveling at moderate speeds. Weather conditions were clear and road conditions were dry.",
-  "findings": "Driver of vehicle 1 failed to yield at the intersection. No evidence of alcohol or drug use. Both drivers were wearing seatbelts.",
-  "recommendations": "Consider installing additional traffic signals at this intersection to prevent future accidents."
+  "content": "Detailed report content"
 }
 
 ### Get all reports
@@ -582,195 +494,43 @@ GET {{baseUrl}}/reports/statistics
 Authorization: Bearer {{accessToken}}
 
 ### Get report by ID
-GET {{baseUrl}}/reports/report-id-here
+GET {{baseUrl}}/reports/{{reportId}}
 Authorization: Bearer {{accessToken}}
 
 ### Update report
-PATCH {{baseUrl}}/reports/report-id-here
+PATCH {{baseUrl}}/reports/{{reportId}}
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "content": "Updated detailed investigation report with additional findings.",
-  "findings": "Updated findings after further investigation",
-  "recommendations": "Updated safety recommendations"
+  "content": "Updated details"
 }
 
 ### Submit report
-PATCH {{baseUrl}}/reports/report-id-here/submit
+PATCH {{baseUrl}}/reports/{{reportId}}/submit
 Authorization: Bearer {{accessToken}}
 
 ### Delete report
-DELETE {{baseUrl}}/reports/report-id-here
+DELETE {{baseUrl}}/reports/{{reportId}}
 Authorization: Bearer {{accessToken}}
+
 
 ### ==============================================
-### AI ENDPOINTS
+### UPLOAD ENDPOINTS
 ### ==============================================
-
-### Analyze accident with AI
-POST {{baseUrl}}/ai/analyze-accident
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "accidentId": "{{accidentId}}",
-  "description": "Two vehicle collision at intersection during rush hour",
-  "severity": "moderate",
-  "weatherConditions": "Clear",
-  "roadConditions": "Dry",
-  "numberOfVehicles": 2,
-  "numberOfInjuries": 1,
-  "images": [
-    "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=800",
-    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800"
-  ]
-}
-
-### Analyze accident with AI (no images - uses mock data)
-POST {{baseUrl}}/ai/analyze-accident
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "accidentId": "{{accidentId}}",
-  "description": "Two vehicle collision at intersection during rush hour",
-  "severity": "moderate",
-  "weatherConditions": "Clear",
-  "roadConditions": "Dry",
-  "numberOfVehicles": 2,
-  "numberOfInjuries": 1
-}
-
-### Generate accident report with AI
-POST {{baseUrl}}/ai/generate-report
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "accidentId": "{{accidentId}}",
-  "includeAnalysis": true,
-  "includeRecommendations": true
-}
-
-### Extract text from image
-POST {{baseUrl}}/ai/extract-text
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "imageUrl": "https://storage.example.com/accidents/license_plate.jpg"
-}
-
-### Classify accident severity
-POST {{baseUrl}}/ai/classify-severity
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "description": "Single vehicle collision with guardrail on highway",
-  "numberOfVehicles": 1,
-  "numberOfInjuries": 0,
-  "numberOfFatalities": 0,
-  "weatherConditions": "Rain",
-  "roadConditions": "Wet"
-}
-
-### Get AI insights for accident
-GET {{baseUrl}}/ai/insights/{{accidentId}}
-Authorization: Bearer {{accessToken}}
-
-### ==============================================
-### DISPATCH ENDPOINTS
-### ==============================================
-
-### Manual dispatch emergency services
-POST {{baseUrl}}/dispatch/manual
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "accidentId": "{{accidentId}}",
-  "userId": "{{userId}}",
-  "severity": 75,
-  "latitude": 40.7128,
-  "longitude": -74.0060
-}
-
-### Get active dispatches
-GET {{baseUrl}}/dispatch/active
-Authorization: Bearer {{accessToken}}
-
-### Get pending dispatches
-GET {{baseUrl}}/dispatch/pending
-Authorization: Bearer {{accessToken}}
-
-### Get completed dispatches
-GET {{baseUrl}}/dispatch/completed
-Authorization: Bearer {{accessToken}}
-
-### Get dispatches by accident
-GET {{baseUrl}}/dispatch/accident/{{accidentId}}
-Authorization: Bearer {{accessToken}}
-
-### Get dispatch statistics
-GET {{baseUrl}}/dispatch/statistics
-Authorization: Bearer {{accessToken}}
-
-### ==============================================
-### CACHE TESTING ENDPOINTS
-### ==============================================
-
-### Test cache functionality
-GET {{baseUrl}}/cache/test
-Authorization: Bearer {{accessToken}}
-
-### Get cache stats (with hit/miss demo)
-GET {{baseUrl}}/cache/stats
-Authorization: Bearer {{accessToken}}
-
-### Clear all cache
-GET {{baseUrl}}/cache/clear
-Authorization: Bearer {{accessToken}}
-
-### ==============================================
-### UPLOAD ENDPOINTS (Cloudinary)
-### ==============================================
-### All files are uploaded to Cloudinary cloud storage
-### Response includes secure URL and publicId for deletion
-
-### Upload single image (JPEG, PNG, GIF, WEBP - max 10MB)
+### Upload single file
 POST {{baseUrl}}/upload/file
 Authorization: Bearer {{accessToken}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="file"; filename="accident_photo.jpg"
+Content-Disposition: form-data; name="file"; filename="photo.jpg"
 Content-Type: image/jpeg
 
-< ./path/to/accident_photo.jpg
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="accidentId"
-
-{{accidentId}}
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="description"
-
-Front view of damaged vehicle
+< ./path/to/photo.jpg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### Response Example:
-# {
-#   "fileUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/accidents/abc123.jpg",
-#   "fileName": "accidents/abc123",
-#   "fileSize": 1048576,
-#   "mimeType": "image/jpeg",
-#   "publicId": "accidents/abc123",
-#   "accidentId": "uuid",
-#   "description": "Front view of damaged vehicle"
-# }
-
-### Upload multiple images (max 10 files)
+### Upload multiple files
 POST {{baseUrl}}/upload/files
 Authorization: Bearer {{accessToken}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -780,117 +540,89 @@ Content-Disposition: form-data; name="files"; filename="photo1.jpg"
 Content-Type: image/jpeg
 
 < ./path/to/photo1.jpg
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="files"; filename="photo2.jpg"
-Content-Type: image/jpeg
-
-< ./path/to/photo2.jpg
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="accidentId"
-
-{{accidentId}}
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### Response Example:
-# {
-#   "accidentId": "uuid",
-#   "files": [
-#     {
-#       "fileUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/accidents/abc123.jpg",
-#       "fileName": "accidents/abc123",
-#       "fileSize": 1048576,
-#       "mimeType": "image/jpeg",
-#       "publicId": "accidents/abc123"
-#     },
-#     {
-#       "fileUrl": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/accidents/def456.jpg",
-#       "fileName": "accidents/def456",
-#       "fileSize": 2097152,
-#       "mimeType": "image/jpeg",
-#       "publicId": "accidents/def456"
-#     }
-#   ],
-#   "count": 2
-# }
-
-### Upload accident document (PDF, etc.)
+### Upload document
 POST {{baseUrl}}/upload/document
 Authorization: Bearer {{accessToken}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="file"; filename="police_report.pdf"
+Content-Disposition: form-data; name="file"; filename="doc.pdf"
 Content-Type: application/pdf
 
-< ./path/to/police_report.pdf
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="accidentId"
-
-{{accidentId}}
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="documentType"
-
-police_report
+< ./path/to/doc.pdf
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### Upload video evidence (MP4, MPEG, MOV - max 100MB)
+### Upload video
 POST {{baseUrl}}/upload/video
 Authorization: Bearer {{accessToken}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="file"; filename="dashcam_footage.mp4"
+Content-Disposition: form-data; name="file"; filename="video.mp4"
 Content-Type: video/mp4
 
-< ./path/to/dashcam_footage.mp4
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="accidentId"
-
-{{accidentId}}
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="description"
-
-Dashcam footage of accident
+< ./path/to/video.mp4
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### Response Example:
-# {
-#   "fileUrl": "https://res.cloudinary.com/your-cloud/video/upload/v1234567890/accidents/xyz789.mp4",
-#   "fileName": "accidents/xyz789",
-#   "fileSize": 52428800,
-#   "mimeType": "video/mp4",
-#   "publicId": "accidents/xyz789",
-#   "accidentId": "uuid",
-#   "description": "Dashcam footage of accident",
-#   "type": "video"
-# }
-
 ### Get upload status
-GET {{baseUrl}}/upload/status/upload-id-here
+GET {{baseUrl}}/upload/status/upload-id
 Authorization: Bearer {{accessToken}}
 
-### Response Example:
-# {
-#   "uploadId": "upload-id-here",
-#   "status": "completed",
-#   "progress": 100,
-#   "uploadedAt": "2026-02-07T00:00:00.000Z"
-# }
-
-### Delete uploaded file from Cloudinary (use publicId from upload response)
-# Example publicId: accidents/abc123 (URL encode if contains special chars)
-DELETE {{baseUrl}}/upload/file/accidents%2Fabc123
+### Delete file
+DELETE {{baseUrl}}/upload/file/public-id
 Authorization: Bearer {{accessToken}}
 
-### Response Example:
-# {
-#   "message": "File deleted successfully",
-#   "publicId": "accidents/abc123"
-# }
+
+### ==============================================
+### VEHICLES ENDPOINTS
+### ==============================================
+### Create vehicle
+POST {{baseUrl}}/vehicles
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "licensePlate": "ABC123",
+  "make": "Toyota",
+  "model": "Camry"
+}
+
+### Get all vehicles
+GET {{baseUrl}}/vehicles
+Authorization: Bearer {{accessToken}}
+
+### Get vehicle by accident
+GET {{baseUrl}}/vehicles/accident/{{accidentId}}
+Authorization: Bearer {{accessToken}}
+
+### Get vehicle by license plate
+GET {{baseUrl}}/vehicles/plate/ABC123
+Authorization: Bearer {{accessToken}}
+
+### Get vehicle by ID
+GET {{baseUrl}}/vehicles/{{vehicleId}}
+Authorization: Bearer {{accessToken}}
+
+### Update vehicle
+PATCH {{baseUrl}}/vehicles/{{vehicleId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "color": "Blue"
+}
+
+### Delete vehicle
+DELETE {{baseUrl}}/vehicles/{{vehicleId}}
+Authorization: Bearer {{accessToken}}
+
 
 ### ==============================================
 ### APP ENDPOINTS
 ### ==============================================
 
 ### Health check
-GET {{baseUrl}}
+GET {{baseUrl}}/

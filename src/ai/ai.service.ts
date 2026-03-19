@@ -17,7 +17,7 @@ export class AiService {
   constructor(private configService: ConfigService) {}
 
   /**
-   * Analyze accident images using Google Gemini 1.5 Flash
+   * Analyze accident images using Google Gemini 
    */
   async analyzeAccidentSeverity(
     imageUrls: string[],
