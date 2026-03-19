@@ -89,16 +89,60 @@ Authorization: Bearer {{accessToken}}
 ### ==============================================
 ### USERS ENDPOINTS
 ### ==============================================
-### Register/Create new user
+
+### Register/Create User (Standard)
 POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "fullName": "John Doe",
-  "email": "john.doe@example.com",
-  "username": "johndoe",
+  "fullName": "Standard User",
+  "email": "user@example.com",
+  "username": "standarduser",
   "password": "Password123!",
   "phoneNumber": "+1234567890",
+  "role": "user",
+  "isActive": true
+}
+
+### Register/Create Officer
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "fullName": "Police Officer",
+  "email": "officer@example.com",
+  "username": "policeofficer",
+  "password": "Password123!",
+  "phoneNumber": "+1234567891",
+  "role": "officer",
+  "isActive": true
+}
+
+### Register/Create Emergency Responder
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "fullName": "EMT Responder",
+  "email": "responder@example.com",
+  "username": "emtresponder",
+  "password": "Password123!",
+  "phoneNumber": "+1234567892",
+  "role": "emergency_responder",
+  "isActive": true
+}
+
+### Register/Create Admin
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "fullName": "System Admin",
+  "email": "admin@example.com",
+  "username": "sysadmin",
+  "password": "Password123!",
+  "phoneNumber": "+1234567893",
+  "role": "admin",
   "isActive": true
 }
 
