@@ -381,12 +381,14 @@ export class AuthService {
 
   async verifyResetToken(token: string): Promise<string> {
     try {
-      const decoded = this.jwtService.verify(token, {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const decoded: any = this.jwtService.verify(token, {
         secret:
           this.configService.get<string>('JWT_RESET_TOKEN_SECRET') ||
           this.configService.get<string>('JWT_SECRET') ||
           'reset-token-secret',
       });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
       const decodedEmail: string = decoded.email;
       const user = await this.usersRepository.findOne({
         where: { email: decodedEmail },

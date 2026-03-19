@@ -85,11 +85,11 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
       ],
     }),
     PrometheusModule.register({
-        defaultMetrics: {
-          enabled: true,
-        },
-        path: '/metrics',
-      }),
+      defaultMetrics: {
+        enabled: true,
+      },
+      path: '/metrics',
+    }),
   ],
   controllers: [],
   providers: [

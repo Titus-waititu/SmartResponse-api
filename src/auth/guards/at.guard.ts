@@ -20,7 +20,6 @@ export class AtGuard extends AuthGuard('jwt-at') {
     if (isPublic) {
       return true;
     }
-    
 
     return super.canActivate(context);
   }
