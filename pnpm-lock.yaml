@@ -104,6 +104,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      streamifier:
+        specifier: ^0.1.1
+        version: 0.1.1
       typeorm:
         specifier: ^0.3.28
         version: 0.3.28(pg@8.17.2)(ts-node@10.9.2(@swc/core@1.15.10)(@types/node@22.19.7)(typescript@5.9.3))
@@ -186,9 +189,6 @@ importers:
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
-      streamifier:
-        specifier: ^0.1.1
-        version: 0.1.1
       supertest:
         specifier: ^7.0.0
         version: 7.2.2
