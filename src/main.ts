@@ -14,6 +14,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.use(helmets());
 
   // Set global API prefix with versioning, excluding metrics endpoint
   app.setGlobalPrefix('api/v1', {
@@ -31,7 +32,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Smart Accident Report System API')
     .setDescription('API documentation for the Smart Accident Report System')
-    .setVersion('1.0')
+    .setVersion('1.0.1')
     .addBearerAuth()
     .build();
 
@@ -49,3 +50,7 @@ async function bootstrap() {
   );
 }
 void bootstrap();
+function helmets(): any {
+  throw new Error('Function not implemented.');
+}
+
