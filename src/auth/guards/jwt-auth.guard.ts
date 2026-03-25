@@ -20,7 +20,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     // Allow unauthenticated access to /metrics endpoint
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const request: any = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (request?.url === '/metrics' || request?.url?.startsWith('/metrics')) {
       return true;
