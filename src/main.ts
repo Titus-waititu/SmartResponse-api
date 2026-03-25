@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -14,9 +15,10 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  app.use(helmets());
+  app.use(helmet());
 
   // Set global API prefix with versioning, excluding metrics endpoint
+
   app.setGlobalPrefix('api/v1', {
     exclude: ['metrics'],
   });
@@ -50,7 +52,3 @@ async function bootstrap() {
   );
 }
 void bootstrap();
-function helmets(): any {
-  throw new Error('Function not implemented.');
-}
-
