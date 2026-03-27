@@ -51,9 +51,9 @@ export class UsersController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
   @ApiOperation({
-    summary: 'Get all users with optional filters (Admin/Officer)',
+    summary: 'Get all users with optional filters (Admin/Officer/Dispatcher)',
   })
   @ApiQuery({ name: 'role', required: false, enum: UserRole })
   @ApiQuery({ name: 'isActive', required: false, type: Boolean })
@@ -89,8 +89,8 @@ export class UsersController {
   }
 
   @Get('active')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
-  @ApiOperation({ summary: 'Get all active users (Admin/Officer)' })
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
+  @ApiOperation({ summary: 'Get all active users (Admin/Officer/Dispatcher)' })
   @ApiResponse({
     status: 200,
     description: 'Active users retrieved successfully',
@@ -100,8 +100,8 @@ export class UsersController {
   }
 
   @Get('role/:role')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
-  @ApiOperation({ summary: 'Get users by role (Admin/Officer)' })
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
+  @ApiOperation({ summary: 'Get users by role (Admin/Officer/Dispatcher)' })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
   getUsersByRole(@Param('role') role: UserRole): Promise<UserResponse[]> {
     return this.usersService.getUsersByRole(role);

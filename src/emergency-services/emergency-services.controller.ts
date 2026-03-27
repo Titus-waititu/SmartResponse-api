@@ -33,27 +33,39 @@ export class EmergencyServicesController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({
-    summary: 'Get all emergency services (Admin/Officer/Emergency Responder)',
+    summary:
+      'Get all emergency services (Admin/Officer/Emergency Responder/Dispatcher)',
   })
   findAll() {
     return this.emergencyServicesService.findAll();
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({
-    summary: 'Get emergency service by ID (Admin/Officer/Emergency Responder)',
+    summary:
+      'Get emergency service by ID (Admin/Officer/Emergency Responder/Dispatcher)',
   })
   findOne(@Param('id') id: string) {
     return this.emergencyServicesService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
   @ApiOperation({
-    summary: 'Update emergency service (Admin/Emergency Responder)',
+    summary: 'Update emergency service (Admin/Emergency Responder/Dispatcher)',
   })
   update(
     @Param('id') id: string,

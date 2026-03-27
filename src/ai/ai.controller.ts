@@ -126,7 +126,12 @@ export class AiController {
   constructor(private readonly aiService: AiService) {}
 
   @Post('analyze-accident')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({ summary: 'Analyze accident with AI' })
   @ApiBody({ type: AnalyzeAccidentDto })
   @ApiResponse({
@@ -152,7 +157,12 @@ export class AiController {
   }
 
   @Post('generate-report')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({ summary: 'Generate accident report with AI' })
   @ApiBody({ type: GenerateReportDto })
   @ApiResponse({
@@ -171,7 +181,12 @@ export class AiController {
   }
 
   @Post('extract-text')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({ summary: 'Extract text from image (OCR)' })
   @ApiBody({ type: ExtractTextDto })
   @ApiResponse({
@@ -188,7 +203,12 @@ export class AiController {
   }
 
   @Post('classify-severity')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({ summary: 'Classify accident severity' })
   @ApiBody({ type: ClassifySeverityDto })
   @ApiResponse({

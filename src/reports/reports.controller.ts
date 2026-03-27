@@ -31,23 +31,38 @@ export class ReportsController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({
-    summary: 'Get all reports (Admin/Officer/Emergency Responder)',
+    summary: 'Get all reports (Admin/Officer/Emergency Responder/Dispatcher)',
   })
   findAll() {
     return this.reportsService.findAll();
   }
 
   @Get('report/:reportNumber')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({ summary: 'Get report by report number' })
   findByReportNumber(@Param('reportNumber') reportNumber: string) {
     return this.reportsService.findByReportNumber(reportNumber);
   }
 
   @Get('accident/:accidentId')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({ summary: 'Get reports by accident ID' })
   findByAccident(@Param('accidentId') accidentId: string) {
     return this.reportsService.findByAccident(accidentId);
@@ -61,30 +76,40 @@ export class ReportsController {
   }
 
   @Get('submitted')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({ summary: 'Get all submitted reports' })
   findSubmitted() {
     return this.reportsService.findSubmitted();
   }
 
   @Get('draft')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get all draft reports' })
   findDraft() {
     return this.reportsService.findDraft();
   }
 
   @Get('statistics')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get report statistics' })
   getStatistics() {
     return this.reportsService.getStatistics();
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({
-    summary: 'Get report by ID (Admin/Officer/Emergency Responder)',
+    summary: 'Get report by ID (Admin/Officer/Emergency Responder/Dispatcher)',
   })
   findOne(@Param('id') id: string) {
     return this.reportsService.findOne(id);

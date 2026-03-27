@@ -75,37 +75,37 @@ export class AccidentsController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
   @ApiOperation({
-    summary: 'Get all accidents (Admin/Officer/Emergency Responder)',
+    summary: 'Get all accidents (Admin/Officer/Emergency Responder/Dispatcher)',
   })
   findAll() {
     return this.accidentsService.findAll();
   }
 
   @Get('report/:reportNumber')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get accident by report number' })
   findByReportNumber(@Param('reportNumber') reportNumber: string) {
     return this.accidentsService.findByReportNumber(reportNumber);
   }
 
   @Get('status/:status')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get accidents by status' })
   findByStatus(@Param('status') status: string) {
     return this.accidentsService.findByStatus(status as AccidentStatus);
   }
 
   @Get('officer/:officerId')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get accidents by assigned officer' })
   findByOfficer(@Param('officerId') officerId: string) {
     return this.accidentsService.findByOfficer(officerId);
   }
 
   @Get('statistics')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get accident statistics' })
   getStatistics() {
     return this.accidentsService.getStatistics();
@@ -116,6 +116,7 @@ export class AccidentsController {
     UserRole.ADMIN,
     UserRole.OFFICER,
     UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
     UserRole.USER,
   )
   @ApiOperation({ summary: 'Get accidents by user ID' })
@@ -127,19 +128,19 @@ export class AccidentsController {
   @Roles(
     UserRole.ADMIN,
     UserRole.OFFICER,
-    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
     UserRole.USER,
   )
   @ApiOperation({
-    summary: 'Get accident by ID (Admin/Officer/Emergency Responder)',
+    summary: 'Get accident by ID (Admin/Officer/Emergency Responder/Dispatcher)',
   })
   findOne(@Param('id') id: string) {
     return this.accidentsService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
-  @ApiOperation({ summary: 'Update accident (Admin/Officer)' })
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
+  @ApiOperation({ summary: 'Update accident (Admin/Officer/Dispatcher)' })
   update(
     @Param('id') id: string,
     @Body() updateAccidentDto: UpdateAccidentDto,
@@ -148,14 +149,14 @@ export class AccidentsController {
   }
 
   @Patch(':id/assign-officer')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Assign officer to accident' })
   assignOfficer(@Param('id') id: string, @Body() body: { officerId: string }) {
     return this.accidentsService.assignOfficer(id, body.officerId);
   }
 
   @Patch(':id/status')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Update accident status' })
   updateStatus(@Param('id') id: string, @Body() body: { status: string }) {
     return this.accidentsService.updateStatus(

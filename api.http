@@ -1,5 +1,6 @@
 @baseUrl = https://smartresponse-api.onrender.com/api/v1
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMWQ0OWRhOS04NjQxLTQxODEtOTVlNi1mYWRmOGQwOGU5NmQiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsInVzZXJuYW1lIjoiU3RhbmRhcmQgVXNlciIsImlhdCI6MTc3NDYxMzkxMiwiZXhwIjoxNzc1NDc3OTEyfQ.jimK4uWUhRYPlr6U0WKTa03MtCo55azkCckkKue0I_g
+
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMWQ0OWRhOS04NjQxLTQxODEtOTVlNi1mYWRmOGQwOGU5NmQiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsInVzZXJuYW1lIjoiU3RhbmRhcmQgVXNlciIsImlhdCI6MTc3NDYyNjkzNCwiZXhwIjoxNzc1NDkwOTM0fQ.CPjQVkkTgTD6TeiLDkzoKl_UMu9cXmlX6G5tFeYvKEE
 @refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MGY2ODYyNS0wMzgxLTRkMjgtOWYzMS1hMzM4ZGQyMDlhMzAiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJTeXN0ZW0gQWRtaW4iLCJpYXQiOjE3NzM5NDE0MDQsImV4cCI6MTc3NDgwNTQwNH0.o9xdRN2qDXVQADC76kvWrdNNOmDILmQNFhFZ4zduYWg
 @userId = e1d49da9-8641-4181-95e6-fadf8d08e96d
 @accidentId = 4b420d5d-753c-4e06-9ccd-3d1cd5903ebf
@@ -9,7 +10,7 @@
 @mediaId = 66ad
 @locationId = 77be
 @notificationId = 88cf
-@serviceId = 99de
+@serviceId = 99de 
 
 ### ==============================================
 ### AUTH ENDPOINTS
@@ -129,6 +130,20 @@ Content-Type: application/json
   "password": "Password123!",
   "phoneNumber": "+1234567892",
   "role": "emergency_responder",
+  "isActive": true
+}
+
+### Register/Create Dispatcher
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "fullName": "Dispatch Coordinator",
+  "email": "dispatcher@example.com",
+  "username": "dispatcher",
+  "password": "Password123!",
+  "phoneNumber": "+1234567894",
+  "role": "dispatcher",
   "isActive": true
 }
 
@@ -353,6 +368,69 @@ Authorization: Bearer {{accessToken}}
 ### Get dispatch statistics
 GET {{baseUrl}}/dispatch/statistics
 Authorization: Bearer {{accessToken}}
+
+### Send dispatch instruction to responder
+POST {{baseUrl}}/dispatch/send-to-responder
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "accidentId": "{{accidentId}}",
+  "responderId": "{{userId}}",
+  "serviceType": "ambulance",
+  "severity": 85,
+  "incidentDescription": "Multiple vehicle collision with injuries",
+  "instructions": "Bring triple immobilization kits. Potential spinal injuries.",
+  "latitude": 37.7749,
+  "longitude": -122.4194,
+  "address": "123 Main St, Downtown",
+  "reportNumber": "RPT-2026-001",
+  "numberOfVehicles": 3,
+  "numberOfInjuries": 4,
+  "numberOfFatalities": 0,
+  "weatherConditions": "Rainy",
+  "roadConditions": "Wet, Low visibility",
+  "priority": "high",
+  "actionItems": ["Establish scene safety", "Triage patients", "Contact supervisor"]
+}
+
+### Get active dispatches for dispatcher
+GET {{baseUrl}}/dispatch/dispatcher/active
+Authorization: Bearer {{accessToken}}
+
+### Get my assignments (Responder endpoint)
+GET {{baseUrl}}/dispatch/my-assignments
+Authorization: Bearer {{accessToken}}
+
+### Get my assignments history (Responder endpoint)
+GET {{baseUrl}}/dispatch/my-assignments/history
+Authorization: Bearer {{accessToken}}
+
+### Get dispatch details
+GET {{baseUrl}}/dispatch/{{serviceId}}/details
+Authorization: Bearer {{accessToken}}
+
+### Acknowledge dispatch (Responder)
+POST {{baseUrl}}/dispatch/{{serviceId}}/acknowledge
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "emergencyServiceId": "{{serviceId}}",
+  "message": "Acknowledged - En route to scene. ETA 5 minutes."
+}
+
+### Update responder status (Responder)
+PATCH {{baseUrl}}/dispatch/{{serviceId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "on_scene",
+  "notes": "Arrived on scene. Multiple injuries confirmed. 2 patients requiring immediate transport.",
+  "currentLatitude": 37.7749,
+  "currentLongitude": -122.4194
+}
 
 
 ### ==============================================

@@ -36,16 +36,21 @@ export class MediaController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
-  @ApiOperation({ summary: 'Get all media (Admin/Officer)' })
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
+  @ApiOperation({ summary: 'Get all media (Admin/Officer/Dispatcher)' })
   findAll() {
     return this.mediaService.findAll();
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({
-    summary: 'Get media by ID (Admin/Officer/Emergency Responder)',
+    summary: 'Get media by ID (Admin/Officer/Emergency Responder/Dispatcher)',
   })
   findOne(@Param('id') id: string) {
     return this.mediaService.findOne(id);

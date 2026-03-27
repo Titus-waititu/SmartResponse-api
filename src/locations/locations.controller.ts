@@ -31,26 +31,37 @@ export class LocationsController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({
-    summary: 'Get all locations (Admin/Officer/Emergency Responder)',
+    summary: 'Get all locations (Admin/Officer/Emergency Responder/Dispatcher)',
   })
   findAll() {
     return this.locationsService.findAll();
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({
-    summary: 'Get location by ID (Admin/Officer/Emergency Responder)',
+    summary:
+      'Get location by ID (Admin/Officer/Emergency Responder/Dispatcher)',
   })
   findOne(@Param('id') id: string) {
     return this.locationsService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
-  @ApiOperation({ summary: 'Update location (Admin/Officer)' })
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
+  @ApiOperation({ summary: 'Update location (Admin/Officer/Dispatcher)' })
   update(
     @Param('id') id: string,
     @Body() updateLocationDto: UpdateLocationDto,
