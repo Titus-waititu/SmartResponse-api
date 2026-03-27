@@ -75,7 +75,12 @@ export class AccidentsController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({
     summary: 'Get all accidents (Admin/Officer/Emergency Responder/Dispatcher)',
   })
@@ -84,21 +89,36 @@ export class AccidentsController {
   }
 
   @Get('report/:reportNumber')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({ summary: 'Get accident by report number' })
   findByReportNumber(@Param('reportNumber') reportNumber: string) {
     return this.accidentsService.findByReportNumber(reportNumber);
   }
 
   @Get('status/:status')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({ summary: 'Get accidents by status' })
   findByStatus(@Param('status') status: string) {
     return this.accidentsService.findByStatus(status as AccidentStatus);
   }
 
   @Get('officer/:officerId')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({ summary: 'Get accidents by assigned officer' })
   findByOfficer(@Param('officerId') officerId: string) {
     return this.accidentsService.findByOfficer(officerId);
@@ -125,14 +145,10 @@ export class AccidentsController {
   }
 
   @Get(':id')
-  @Roles(
-    UserRole.ADMIN,
-    UserRole.OFFICER,
-    UserRole.DISPATCHER,
-    UserRole.USER,
-  )
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER, UserRole.USER)
   @ApiOperation({
-    summary: 'Get accident by ID (Admin/Officer/Emergency Responder/Dispatcher)',
+    summary:
+      'Get accident by ID (Admin/Officer/Emergency Responder/Dispatcher)',
   })
   findOne(@Param('id') id: string) {
     return this.accidentsService.findOne(id);
