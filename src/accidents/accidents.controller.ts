@@ -112,7 +112,7 @@ export class AccidentsController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.USER)
   @ApiOperation({
     summary: 'Get accident by ID (Admin/Officer/Emergency Responder)',
   })
