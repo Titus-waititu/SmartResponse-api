@@ -3,4 +3,5 @@ export enum UserRole {
   USER = 'user',
   OFFICER = 'officer',
   EMERGENCY_RESPONDER = 'emergency_responder',
+  DISPATCHER = 'dispatcher',
 }

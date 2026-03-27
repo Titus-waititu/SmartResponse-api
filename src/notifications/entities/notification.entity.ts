@@ -16,6 +16,8 @@ export enum NotificationType {
   STATUS_UPDATE = 'status_update',
   EMERGENCY_ALERT = 'emergency_alert',
   SYSTEM_NOTIFICATION = 'system_notification',
+  DISPATCH_INSTRUCTION = 'dispatch_instruction',
+  RESPONDER_ASSIGNMENT = 'responder_assignment',
 }
 
 export enum NotificationPriority {

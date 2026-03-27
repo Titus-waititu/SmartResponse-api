@@ -39,7 +39,12 @@ export class RegisterDto {
   @IsPhoneNumber()
   phoneNumber?: string;
 
-  @ApiProperty({ enum: UserRole, default: UserRole.USER })
+  @ApiProperty({
+    enum: UserRole,
+    default: UserRole.USER,
+    description:
+      'Available roles: user, officer, dispatcher, emergency_responder, admin',
+  })
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
