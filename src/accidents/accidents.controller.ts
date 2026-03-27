@@ -111,8 +111,25 @@ export class AccidentsController {
     return this.accidentsService.getStatistics();
   }
 
+  @Get('user/:userId')
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.USER,
+  )
+  @ApiOperation({ summary: 'Get accidents by user ID' })
+  findByUserId(@Param('userId') userId: string) {
+    return this.accidentsService.findByUserId(userId);
+  }
+
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.USER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.USER,
+  )
   @ApiOperation({
     summary: 'Get accident by ID (Admin/Officer/Emergency Responder)',
   })

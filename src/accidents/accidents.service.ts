@@ -156,6 +156,14 @@ export class AccidentsService {
     });
   }
 
+  async findByUserId(userId: string): Promise<Accident[]> {
+    return await this.accidentRepository.find({
+      where: { reportedById: userId },
+      relations: ['reportedBy', 'assignedOfficer'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async update(
     id: string,
     updateAccidentDto: UpdateAccidentDto,

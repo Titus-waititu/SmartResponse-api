@@ -1,7 +1,7 @@
-@baseUrl = https://smartresponse-api.onrender.com/api/v1
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MGY2ODYyNS0wMzgxLTRkMjgtOWYzMS1hMzM4ZGQyMDlhMzAiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJTeXN0ZW0gQWRtaW4iLCJpYXQiOjE3NzM5NDE0MDQsImV4cCI6MTc3NDgwNTQwNH0.CU2VODO7jNtTo94gM7LuOpLn25Wl09ZuTcuTF5vgWT8
+@baseUrl = http://localhost:8000/api/v1
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMWQ0OWRhOS04NjQxLTQxODEtOTVlNi1mYWRmOGQwOGU5NmQiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsInVzZXJuYW1lIjoiU3RhbmRhcmQgVXNlciIsImlhdCI6MTc3NDYxMzkxMiwiZXhwIjoxNzc1NDc3OTEyfQ.jimK4uWUhRYPlr6U0WKTa03MtCo55azkCckkKue0I_g
 @refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MGY2ODYyNS0wMzgxLTRkMjgtOWYzMS1hMzM4ZGQyMDlhMzAiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJTeXN0ZW0gQWRtaW4iLCJpYXQiOjE3NzM5NDE0MDQsImV4cCI6MTc3NDgwNTQwNH0.o9xdRN2qDXVQADC76kvWrdNNOmDILmQNFhFZ4zduYWg
-@userId = 50f68625-0381-4d28-9f31-a338dd20la30
+@userId = e1d49da9-8641-4181-95e6-fadf8d08e96d
 @accidentId = 4b420d5d-753c-4e06-9ccd-3d1cd5903ebf
 @sessionId = 8f192b-819a
 @reportId = 12fa
@@ -19,7 +19,7 @@ POST {{baseUrl}}/auth/signin
 Content-Type: application/json
 
 {
-  "email": "admin@example.com",
+  "email": "user@example.com",
   "password": "Password123!"
 }
 
@@ -227,6 +227,10 @@ Authorization: Bearer {{accessToken}}
 
 ### Get accidents by officer
 GET {{baseUrl}}/accidents/officer/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get accidents by user ID
+GET {{baseUrl}}/accidents/user/{{userId}}
 Authorization: Bearer {{accessToken}}
 
 ### Get accident statistics
