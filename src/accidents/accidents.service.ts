@@ -111,7 +111,14 @@ export class AccidentsService {
 
   async findAll(): Promise<Accident[]> {
     return await this.accidentRepository.find({
-      relations: ['reportedBy', 'assignedOfficer', 'reports', 'emergencyServices', 'vehicles', 'media'],
+      relations: [
+        'reportedBy',
+        'assignedOfficer',
+        'reports',
+        'emergencyServices',
+        'vehicles',
+        'media',
+      ],
       order: { createdAt: 'DESC' },
     });
   }
@@ -119,7 +126,14 @@ export class AccidentsService {
   async findOne(id: string): Promise<Accident> {
     const accident = await this.accidentRepository.findOne({
       where: { id },
-      relations: ['reportedBy', 'assignedOfficer', 'reports', 'emergencyServices', 'vehicles', 'media'],
+      relations: [
+        'reportedBy',
+        'assignedOfficer',
+        'reports',
+        'emergencyServices',
+        'vehicles',
+        'media',
+      ],
     });
     if (!accident) {
       throw new NotFoundException(`Accident with ID ${id} not found`);
@@ -130,7 +144,14 @@ export class AccidentsService {
   async findByReportNumber(reportNumber: string): Promise<Accident> {
     const accident = await this.accidentRepository.findOne({
       where: { reportNumber },
-      relations: ['reportedBy', 'assignedOfficer', 'reports', 'emergencyServices', 'vehicles', 'media'],
+      relations: [
+        'reportedBy',
+        'assignedOfficer',
+        'reports',
+        'emergencyServices',
+        'vehicles',
+        'media',
+      ],
     });
     if (!accident) {
       throw new NotFoundException(
@@ -143,7 +164,14 @@ export class AccidentsService {
   async findByStatus(status: AccidentStatus): Promise<Accident[]> {
     return await this.accidentRepository.find({
       where: { status },
-      relations: ['reportedBy', 'assignedOfficer', 'reports', 'emergencyServices', 'vehicles', 'media'],
+      relations: [
+        'reportedBy',
+        'assignedOfficer',
+        'reports',
+        'emergencyServices',
+        'vehicles',
+        'media',
+      ],
       order: { createdAt: 'DESC' },
     });
   }
@@ -151,7 +179,14 @@ export class AccidentsService {
   async findByOfficer(officerId: string): Promise<Accident[]> {
     return await this.accidentRepository.find({
       where: { assignedOfficerId: officerId },
-      relations: ['reportedBy', 'assignedOfficer', 'reports', 'emergencyServices', 'vehicles', 'media'],
+      relations: [
+        'reportedBy',
+        'assignedOfficer',
+        'reports',
+        'emergencyServices',
+        'vehicles',
+        'media',
+      ],
       order: { createdAt: 'DESC' },
     });
   }
@@ -159,7 +194,14 @@ export class AccidentsService {
   async findByUserId(userId: string): Promise<Accident[]> {
     return await this.accidentRepository.find({
       where: { reportedById: userId },
-      relations: ['reportedBy', 'assignedOfficer', 'reports', 'emergencyServices', 'vehicles', 'media'],
+      relations: [
+        'reportedBy',
+        'assignedOfficer',
+        'reports',
+        'emergencyServices',
+        'vehicles',
+        'media',
+      ],
       order: { createdAt: 'DESC' },
     });
   }
