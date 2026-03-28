@@ -41,34 +41,34 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
     AiModule,
     UploadModule,
     DispatchModule,
-    CacheModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      isGlobal: true,
-      useFactory: (configService: ConfigService) => {
-        // Build Redis URL from individual config values or use REDIS_URL directly
-        const redisUrl =
-          configService.get<string>('REDIS_URL') ||
-          `redis://:${configService.get<string>('REDIS_PASSWORD', '')}@${configService.get<string>('REDIS_HOST', 'localhost')}:${configService.get<number>('REDIS_PORT', 6379)}`;
+    // CacheModule.registerAsync({
+    //   imports: [ConfigModule],
+    //   inject: [ConfigService],
+    //   isGlobal: true,
+    //   useFactory: (configService: ConfigService) => {
+    //     // Build Redis URL from individual config values or use REDIS_URL directly
+    //     const redisUrl =
+    //       configService.get<string>('REDIS_URL') ||
+    //       `redis://:${configService.get<string>('REDIS_PASSWORD', '')}@${configService.get<string>('REDIS_HOST', 'localhost')}:${configService.get<number>('REDIS_PORT', 6379)}`;
 
-        console.log(
-          'Cache configuration - Redis URL:',
-          redisUrl.replace(/:[^:@]*@/, ':****@'),
-        ); // Log with masked password
+    //     console.log(
+    //       'Cache configuration - Redis URL:',
+    //       redisUrl.replace(/:[^:@]*@/, ':****@'),
+    //     ); // Log with masked password
 
-        return {
-          ttl: 60000, // Default TTL for cache entries (60 seconds)
-          stores: [
-            // Memory store for fast local access
-            new Keyv({
-              store: new CacheableMemory({ ttl: 30000, lruSize: 5000 }),
-            }),
-            // Redis store for distributed caching
-            createKeyv(redisUrl),
-          ],
-        };
-      },
-    }),
+    //     return {
+    //       ttl: 60000, // Default TTL for cache entries (60 seconds)
+    //       stores: [
+    //         // Memory store for fast local access
+    //         new Keyv({
+    //           store: new CacheableMemory({ ttl: 30000, lruSize: 5000 }),
+    //         }),
+    //         // Redis store for distributed caching
+    //         createKeyv(redisUrl),
+    //       ],
+    //     };
+    //   },
+    // }),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
