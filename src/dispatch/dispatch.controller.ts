@@ -64,7 +64,7 @@ export class DispatchController {
   ) {}
 
   @Post('manual')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN,UserRole.DISPATCHER, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
   @ApiOperation({ summary: 'Manually dispatch emergency services' })
   @ApiBody({ type: ManualDispatchDto })
   @ApiResponse({
@@ -84,7 +84,7 @@ export class DispatchController {
   }
 
   @Get('active')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get all active dispatches' })
   @ApiResponse({
     status: 200,
@@ -103,7 +103,7 @@ export class DispatchController {
   }
 
   @Get('accident/:accidentId')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get dispatches for a specific accident' })
   @ApiResponse({
     status: 200,
@@ -123,7 +123,7 @@ export class DispatchController {
   }
 
   @Get('pending')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get all pending dispatches' })
   @ApiResponse({
     status: 200,
@@ -142,7 +142,7 @@ export class DispatchController {
   }
 
   @Get('completed')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get completed dispatches' })
   @ApiResponse({
     status: 200,
@@ -162,7 +162,7 @@ export class DispatchController {
   }
 
   @Get('statistics')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
   @ApiOperation({ summary: 'Get dispatch statistics' })
   @ApiResponse({
     status: 200,
