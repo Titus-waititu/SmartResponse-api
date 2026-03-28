@@ -75,7 +75,14 @@ export class UsersService {
 
     if (params?.search) {
       // For search, we'll use a more complex query
-      const queryBuilder = this.usersRepository.createQueryBuilder('user');
+      const queryBuilder = this.usersRepository.createQueryBuilder('user')
+        .leftJoinAndSelect('user.accidentsReported', 'accidentsReported')
+        .leftJoinAndSelect('user.accidentsAssigned', 'accidentsAssigned')
+        .leftJoinAndSelect('user.notifications', 'notifications')
+        .leftJoinAndSelect('user.sessions', 'sessions')
+        .leftJoinAndSelect('user.mediaUploaded', 'mediaUploaded')
+        .leftJoinAndSelect('user.reportsCreated', 'reportsCreated')
+        .leftJoinAndSelect('user.emergencyServicesAsResponder', 'emergencyServicesAsResponder');
 
       queryBuilder.where(
         '(user.fullName ILIKE :search OR user.email ILIKE :search)',
@@ -107,6 +114,7 @@ export class UsersService {
     // Simple query without search
     const [users, total] = await this.usersRepository.findAndCount({
       where,
+      relations: ['accidentsReported', 'accidentsAssigned', 'notifications', 'sessions', 'mediaUploaded', 'reportsCreated', 'emergencyServicesAsResponder'],
       order: { createdAt: 'DESC' },
       skip,
       take: limit,
@@ -121,7 +129,10 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<UserResponse> {
-    const user = await this.usersRepository.findOne({ where: { id } });
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations: ['accidentsReported', 'accidentsAssigned', 'notifications', 'sessions', 'mediaUploaded', 'reportsCreated', 'emergencyServicesAsResponder'],
+    });
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);

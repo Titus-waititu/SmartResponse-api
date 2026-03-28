@@ -5,6 +5,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { UserRole } from '../../auth/types';
 
@@ -48,6 +49,27 @@ export class User {
 
   @Column({ name: 'hashed_refresh_token', nullable: true, select: false })
   hashedRefreshToken?: string;
+
+  @OneToMany('Accident', 'reportedBy')
+  accidentsReported?: any[];
+
+  @OneToMany('Accident', 'assignedOfficer')
+  accidentsAssigned?: any[];
+
+  @OneToMany('Notification', 'user')
+  notifications?: any[];
+
+  @OneToMany('Session', 'user')
+  sessions?: any[];
+
+  @OneToMany('Media', 'uploadedBy')
+  mediaUploaded?: any[];
+
+  @OneToMany('Report', 'createdBy')
+  reportsCreated?: any[];
+
+  @OneToMany('EmergencyService', 'responder')
+  emergencyServicesAsResponder?: any[];
 
   @ApiProperty()
   @CreateDateColumn({ name: 'created_at' })

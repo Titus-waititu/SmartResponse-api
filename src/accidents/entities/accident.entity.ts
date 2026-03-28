@@ -6,9 +6,14 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Report } from '../../reports/entities/report.entity';
+import { EmergencyService } from '../../emergency-services/entities/emergency-service.entity';
+import { Vehicle } from '../../vehicles/entities/vehicle.entity';
+import { Media } from '../../media/entities/media.entity';
 
 export enum AccidentSeverity {
   MINOR = 'minor',
@@ -101,6 +106,18 @@ export class Accident {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'assigned_officer_id' })
   assignedOfficer?: User;
+
+  @OneToMany(() => Report, (report) => report.accident)
+  reports?: Report[];
+
+  @OneToMany(() => EmergencyService, (service) => service.accident)
+  emergencyServices?: EmergencyService[];
+
+  @OneToMany(() => Vehicle, (vehicle) => vehicle.accident)
+  vehicles?: Vehicle[];
+
+  @OneToMany(() => Media, (media) => media.accident)
+  media?: Media[];
 
   @ApiProperty()
   @CreateDateColumn({ name: 'created_at' })
