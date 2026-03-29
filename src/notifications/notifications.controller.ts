@@ -13,6 +13,7 @@ import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '../auth/types';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
@@ -38,10 +39,45 @@ export class NotificationsController {
     UserRole.ADMIN,
     UserRole.OFFICER,
     UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
   )
   @ApiOperation({ summary: 'Get all notifications (All authenticated users)' })
   findAll() {
     return this.notificationsService.findAll();
+  }
+
+  @Get('unread')
+  @Roles(
+    UserRole.USER,
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
+  @ApiOperation({
+    summary: 'Get unread notifications for current user',
+    description:
+      'Retrieves all unread notifications for the authenticated user, ordered by creation date (newest first).',
+  })
+  getUnreadNotifications(@CurrentUser('sub') userId: string) {
+    return this.notificationsService.findUnreadByUser(userId);
+  }
+
+  @Get('unread/count')
+  @Roles(
+    UserRole.USER,
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
+  @ApiOperation({
+    summary: 'Get count of unread notifications',
+    description:
+      'Returns the total number of unread notifications for the current user.',
+  })
+  getUnreadCount(@CurrentUser('sub') userId: string) {
+    return this.notificationsService.getUnreadCount(userId);
   }
 
   @Get(':id')
@@ -50,6 +86,7 @@ export class NotificationsController {
     UserRole.ADMIN,
     UserRole.OFFICER,
     UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
   )
   @ApiOperation({ summary: 'Get notification by ID (All authenticated users)' })
   findOne(@Param('id') id: string) {

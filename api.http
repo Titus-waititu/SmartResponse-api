@@ -559,6 +559,14 @@ Content-Type: application/json
 GET {{baseUrl}}/notifications
 Authorization: Bearer {{accessToken}}
 
+### Get unread notifications
+GET {{baseUrl}}/notifications/unread
+Authorization: Bearer {{accessToken}}
+
+### Get unread notifications count
+GET {{baseUrl}}/notifications/unread/count
+Authorization: Bearer {{accessToken}}
+
 ### Get notification by ID
 GET {{baseUrl}}/notifications/{{notificationId}}
 Authorization: Bearer {{accessToken}}
