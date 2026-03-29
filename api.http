@@ -571,6 +571,10 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/notifications/{{notificationId}}
 Authorization: Bearer {{accessToken}}
 
+### Mark notification as read
+PATCH {{baseUrl}}/notifications/{{notificationId}}/read
+Authorization: Bearer {{accessToken}}
+
 ### Update notification
 PATCH {{baseUrl}}/notifications/{{notificationId}}
 Authorization: Bearer {{accessToken}}

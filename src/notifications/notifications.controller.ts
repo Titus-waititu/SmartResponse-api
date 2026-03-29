@@ -93,6 +93,22 @@ export class NotificationsController {
     return this.notificationsService.findOne(id);
   }
 
+  @Patch(':id/read')
+  @Roles(
+    UserRole.USER,
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
+  @ApiOperation({
+    summary: 'Mark notification as read',
+    description: 'Marks a specific notification as read and sets the read timestamp.',
+  })
+  markAsRead(@Param('id') id: string) {
+    return this.notificationsService.markAsRead(id);
+  }
+
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER)
   @ApiOperation({
