@@ -103,7 +103,8 @@ export class NotificationsController {
   )
   @ApiOperation({
     summary: 'Mark notification as read',
-    description: 'Marks a specific notification as read and sets the read timestamp.',
+    description:
+      'Marks a specific notification as read and sets the read timestamp.',
   })
   markAsRead(@Param('id') id: string) {
     return this.notificationsService.markAsRead(id);
