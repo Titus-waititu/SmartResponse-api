@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AccidentsService } from './accidents.service';
@@ -80,11 +81,23 @@ export class AccidentsController {
     UserRole.OFFICER,
     UserRole.EMERGENCY_RESPONDER,
     UserRole.DISPATCHER,
+    UserRole.USER,
   )
   @ApiOperation({
-    summary: 'Get all accidents (Admin/Officer/Emergency Responder/Dispatcher)',
+    summary: 'Get accidents with optional filters (query parameters)',
+    description:
+      'Retrieve accidents filtered by userId, status, or other criteria. Supports query parameters like ?userId=xxx or ?status=xxx',
   })
-  findAll() {
+  findAccidents(
+    @Query('userId') userId?: string,
+    @Query('status') status?: string,
+  ) {
+    if (userId) {
+      return this.accidentsService.findByUserId(userId);
+    }
+    if (status) {
+      return this.accidentsService.findByStatus(status as AccidentStatus);
+    }
     return this.accidentsService.findAll();
   }
 

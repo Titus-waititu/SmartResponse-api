@@ -232,6 +232,14 @@ Content-Type: application/json
 GET {{baseUrl}}/accidents
 Authorization: Bearer {{accessToken}}
 
+### Get accidents by user ID (query parameter)
+GET {{baseUrl}}/accidents?userId={{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Get accidents by status (query parameter)
+GET {{baseUrl}}/accidents?status=reported
+Authorization: Bearer {{accessToken}}
+
 ### Get accident by report number
 GET {{baseUrl}}/accidents/report/ACC-20260129-001
 Authorization: Bearer {{accessToken}}
