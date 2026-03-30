@@ -9,7 +9,7 @@ This smart accident reporting system now includes advanced AI capabilities for a
 ### 1. AI Image Analysis
 
 - **Service**: `AiService`
-- **Capability**: Analyzes accident scene images using OpenAI Vision API
+- **Capability**: Analyzes accident scene images using gemini Vision API
 - **Output**:
   - Severity score (0-100)
   - Detailed analysis text
