@@ -237,16 +237,14 @@ export class DispatchService {
           ServiceStatus.ON_SCENE,
         ];
 
-    return this.emergencyServiceRepo.find({
-      where: {
-        responderId,
-        status: statuses as any,
-      },
-      relations: ['accident'],
-      order: {
-        dispatchedAt: 'DESC',
-      },
-    });
+    return this.emergencyServiceRepo
+      .createQueryBuilder('service')
+      .leftJoinAndSelect('service.accident', 'accident')
+      .leftJoinAndSelect('service.responder', 'responder')
+      .where('service.responderId = :responderId', { responderId })
+      .andWhere('service.status IN (:...statuses)', { statuses })
+      .orderBy('service.dispatchedAt', 'DESC')
+      .getMany();
   }
 
   /**
@@ -257,13 +255,13 @@ export class DispatchService {
     emergencyServiceId: string,
     responderId: string,
   ): Promise<EmergencyService> {
-    const service = await this.emergencyServiceRepo.findOne({
-      where: {
-        id: emergencyServiceId,
-        responderId,
-      },
-      relations: ['accident', 'responder'],
-    });
+    const service = await this.emergencyServiceRepo
+      .createQueryBuilder('service')
+      .leftJoinAndSelect('service.accident', 'accident')
+      .leftJoinAndSelect('service.responder', 'responder')
+      .where('service.id = :id', { id: emergencyServiceId })
+      .andWhere('service.responderId = :responderId', { responderId })
+      .getOne();
 
     if (!service) {
       throw new Error(
@@ -346,19 +344,19 @@ export class DispatchService {
    * Used by dispatchers to see all pending and active dispatches
    */
   async getActiveDispatchesForDispatcher(): Promise<EmergencyService[]> {
-    return this.emergencyServiceRepo.find({
-      where: {
-        status: [
+    return this.emergencyServiceRepo
+      .createQueryBuilder('service')
+      .leftJoinAndSelect('service.accident', 'accident')
+      .leftJoinAndSelect('service.responder', 'responder')
+      .where('service.status IN (:...statuses)', {
+        statuses: [
           ServiceStatus.DISPATCHED,
           ServiceStatus.REQUESTED,
           ServiceStatus.EN_ROUTE,
           ServiceStatus.ON_SCENE,
-        ] as any,
-      },
-      relations: ['accident', 'responder'],
-      order: {
-        dispatchedAt: 'DESC',
-      },
-    });
+        ],
+      })
+      .orderBy('service.dispatchedAt', 'DESC')
+      .getMany();
   }
 }
