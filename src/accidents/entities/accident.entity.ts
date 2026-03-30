@@ -25,6 +25,7 @@ export enum AccidentSeverity {
 export enum AccidentStatus {
   REPORTED = 'reported',
   UNDER_INVESTIGATION = 'under_investigation',
+  IN_PROGRESS = 'in_progress',
   RESOLVED = 'resolved',
   CLOSED = 'closed',
 }
