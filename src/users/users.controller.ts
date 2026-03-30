@@ -100,7 +100,13 @@ export class UsersController {
   }
 
   @Get('role/:role')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.DISPATCHER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.DISPATCHER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.USER,
+  )
   @ApiOperation({ summary: 'Get users by role (Admin/Officer/Dispatcher)' })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
   getUsersByRole(@Param('role') role: UserRole): Promise<UserResponse[]> {
@@ -108,7 +114,13 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.OFFICER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.DISPATCHER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.USER,
+  )
   @ApiOperation({ summary: 'Get user by ID (Admin/Officer)' })
   @ApiResponse({
     status: 200,
@@ -121,8 +133,14 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update user (Admin only)' })
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.DISPATCHER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.USER,
+  )
+  @ApiOperation({ summary: 'Update user' })
   @ApiResponse({
     status: 200,
     description: 'User updated successfully',
