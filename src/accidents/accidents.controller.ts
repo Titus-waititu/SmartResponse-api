@@ -36,7 +36,7 @@ export class AccidentsController {
   constructor(private readonly accidentsService: AccidentsService) {}
 
   @Post()
-  @Roles(UserRole.USER, UserRole.OFFICER, UserRole.ADMIN)
+  @Public()
   @ApiOperation({ summary: 'Create accident report (basic)' })
   create(@Body() createAccidentDto: CreateAccidentDto) {
     return this.accidentsService.create(createAccidentDto);
