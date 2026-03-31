@@ -41,11 +41,19 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
     // Create user if doesn't exist
     if (!user) {
+      const fullName =
+        `${name.givenName || ''} ${name.familyName || ''}`.trim() ||
+        'Google User';
+      const username = emails[0].value.split('@')[0] || 'googleuser';
+
       user = this.userRepository.create({
+        fullName,
         email: emails[0].value,
-        username: name.givenName || name.familyName || 'User',
-        role: UserRole.EMERGENCY_RESPONDER,
+        username,
+        password: await this.generateRandomPassword(), // Generate a random password for OAuth users
+        role: UserRole.USER, // Default role for new OAuth users
         image_url: photos[0]?.value,
+        isActive: true,
       });
       await this.userRepository.save(user);
     }
@@ -59,5 +67,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       providerId: id,
       provider: 'google',
     });
+  }
+
+  private async generateRandomPassword(): Promise<string> {
+    // Generate a random password for OAuth users who won't use traditional login
+    const crypto = await import('crypto');
+    return crypto.randomBytes(16).toString('hex');
   }
 }

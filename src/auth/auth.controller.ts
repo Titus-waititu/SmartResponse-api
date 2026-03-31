@@ -13,7 +13,7 @@ import {
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Request,Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
@@ -73,34 +73,46 @@ export class AuthController {
     // Guard will handle redirection
   }
 
-  // Callback after Google login
-  // Callback after Google login
   @Public()
   @Get('google/callback')
   @UseGuards(GoogleOauthGuard)
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const user = req.user;
-    if (!user) {
-      throw new UnauthorizedException('Google authentication failed');
+    try {
+      const user = req.user;
+      if (!user) {
+        throw new UnauthorizedException('Google authentication failed');
+      }
+
+      const result = await this.authService.googleAuthRedirect(user);
+      const { accessToken, refreshToken } = result.tokens;
+
+      // Get frontend URL from environment or use default
+      const baseFrontendUrl =
+        process.env.FRONTEND_URL || 'http://localhost:8080';
+      const frontendURL = new URL(`${baseFrontendUrl}/auth/google/callback`);
+
+      // Add tokens and user info to query parameters
+      frontendURL.searchParams.set('accessToken', accessToken);
+      frontendURL.searchParams.set('refreshToken', refreshToken);
+      frontendURL.searchParams.set('id', result.user.id);
+      frontendURL.searchParams.set('role', result.user.role);
+      frontendURL.searchParams.set('username', result.user.username);
+      frontendURL.searchParams.set('email', result.user.email);
+
+      // Redirect to frontend with tokens and user info in URL
+      return res.redirect(frontendURL.toString());
+    } catch (error) {
+      console.error('Google callback error:', error);
+      const baseFrontendUrl =
+        process.env.FRONTEND_URL || 'http://localhost:8080';
+      const errorUrl = new URL(`${baseFrontendUrl}/auth/error`);
+      errorUrl.searchParams.set('message', 'Authentication failed');
+      return res.redirect(errorUrl.toString());
     }
-
-    const result = await this.authService.googleAuthRedirect(user);
-    const { accessToken, refreshToken } = result.tokens;
-
-    // Optional: include user info (minimized) in redirect
-    const frontendURL = new URL('http://localhost:8080/auth/google/callback');
-    frontendURL.searchParams.set('accessToken', accessToken);
-    frontendURL.searchParams.set('refreshToken', refreshToken);
-    frontendURL.searchParams.set('id', result.user.id);
-    frontendURL.searchParams.set('role', result.user.role);
-    frontendURL.searchParams.set('username', result.user.username);
-    frontendURL.searchParams.set('email', result.user.email);
-    // Redirect to frontend with tokens and role in URL
-    return res.redirect(frontendURL.toString());
   }
 
   @Get('me')
-   getMe(@Req() req: Request) {
+  getMe(@Req() req: Request) {
     // `req.user` is populated by AtStrategy (global guard)
     if (!req.user) {
       throw new UnauthorizedException('User not authenticated');
