@@ -228,7 +228,28 @@ export class AuthService {
       sessionId,
     };
   }
-
+  async googleAuthRedirect(user: any) {
+    const { id, email, role, username } = user;
+    const { accessToken, refreshToken } = await this.getTokens(
+      id,
+      email,
+      role,
+      username,
+    );
+    return {
+      user: {
+        id,
+        username,
+        email,
+        role,
+      },
+      tokens: {
+        accessToken,
+        refreshToken,
+      },
+    };
+  }
+  
   async refreshTokens(id: string, refreshToken: string) {
     const user = await this.usersRepository.findOne({
       where: { id },

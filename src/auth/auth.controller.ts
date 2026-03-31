@@ -10,8 +10,10 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  Res,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request,Response } from 'express';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
@@ -24,6 +26,7 @@ import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
+import { GoogleOauthGuard } from './guards/google.oauth.guard';
 
 @Controller('auth')
 @UseGuards(JwtAuthGuard)
@@ -62,6 +65,54 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@CurrentUser('userId') userId: string) {
     return this.authService.logout(userId);
+  }
+  @Public()
+  @Get('google')
+  @UseGuards(GoogleOauthGuard)
+  async googleAuth() {
+    // Guard will handle redirection
+  }
+
+  // Callback after Google login
+  // Callback after Google login
+  @Public()
+  @Get('google/callback')
+  @UseGuards(GoogleOauthGuard)
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+    const user = req.user;
+    if (!user) {
+      throw new UnauthorizedException('Google authentication failed');
+    }
+
+    const result = await this.authService.googleAuthRedirect(user);
+    const { accessToken, refreshToken } = result.tokens;
+
+    // Optional: include user info (minimized) in redirect
+    const frontendURL = new URL('http://localhost:8080/auth/google/callback');
+    frontendURL.searchParams.set('accessToken', accessToken);
+    frontendURL.searchParams.set('refreshToken', refreshToken);
+    frontendURL.searchParams.set('id', result.user.id);
+    frontendURL.searchParams.set('role', result.user.role);
+    frontendURL.searchParams.set('username', result.user.username);
+    frontendURL.searchParams.set('email', result.user.email);
+    // Redirect to frontend with tokens and role in URL
+    return res.redirect(frontendURL.toString());
+  }
+
+  @Get('me')
+   getMe(@Req() req: Request) {
+    // `req.user` is populated by AtStrategy (global guard)
+    if (!req.user) {
+      throw new UnauthorizedException('User not authenticated');
+    }
+
+    // The JWT payload now contains: { sub, email, role, username }
+    return {
+      id: req.user['sub'],
+      username: req.user['username'],
+      email: req.user['email'],
+      role: req.user['role'],
+    };
   }
 
   @Post('change-password')
