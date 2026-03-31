@@ -31,15 +31,17 @@ async function bootstrap() {
   });
 
   // Enable CORS with proper configuration for OAuth and frontend
-  const corsOrigins = process.env.NODE_ENV === 'production'
-    ? [
-        'https://smartresponse-client.vercel.app',
-        'https://smartresponse-frontend.vercel.app',
-        'https://swift-response-hubs.vercel.app',
-        'https://smartresponse.onrender.com',
-        process.env.FRONTEND_URL, // Add from .env if needed
-      ].filter(Boolean)
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080', 'http://localhost:4000'];
+  const developmentOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080', 'http://localhost:4000'];
+  const productionOrigins = [
+    'https://smartresponse-client.vercel.app',
+    'https://smartresponse-frontend.vercel.app',
+    'https://swift-response-hubs.vercel.app',
+    'https://smartresponse.onrender.com',
+    process.env.FRONTEND_URL, // Add from .env if needed
+  ].filter(Boolean);
+
+  // Always include development origins for local testing + production origins
+  const corsOrigins = [...developmentOrigins, ...productionOrigins];
 
   app.enableCors({
     origin: corsOrigins,
