@@ -7,14 +7,16 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RfStrategy } from './strategies/jwt-refresh.strategy';
+import { GoogleStrategy } from './strategies/google.strategies';
 import { UsersModule } from '../users/users.module';
 import { Session } from './entities/session.entity';
+import { User } from '../users/entities/user.entity';
 
 @Module({
   imports: [
     ConfigModule,
     PassportModule,
-    TypeOrmModule.forFeature([Session]),
+    TypeOrmModule.forFeature([Session, User]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService): JwtModuleOptions => {
@@ -30,7 +32,7 @@ import { Session } from './entities/session.entity';
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, RfStrategy],
-  exports: [AuthService, JwtStrategy, RfStrategy],
+  providers: [AuthService, JwtStrategy, RfStrategy, GoogleStrategy],
+  exports: [AuthService, JwtStrategy, RfStrategy, GoogleStrategy],
 })
 export class AuthModule {}

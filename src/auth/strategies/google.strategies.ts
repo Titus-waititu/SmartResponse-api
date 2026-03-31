@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { randomBytes } from 'crypto';
 import { User } from '../../users/entities/user.entity';
 import { Strategy, VerifyCallback } from 'passport-google-oauth2';
 import { UserRole } from '../types';
@@ -50,7 +51,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         fullName,
         email: emails[0].value,
         username,
-        password: await this.generateRandomPassword(), // Generate a random password for OAuth users
+        password: this.generateRandomPassword(), // Generate a random password for OAuth users
         role: UserRole.USER, // Default role for new OAuth users
         image_url: photos[0]?.value,
         isActive: true,
@@ -69,9 +70,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
-  private async generateRandomPassword(): Promise<string> {
+  private generateRandomPassword(): string {
     // Generate a random password for OAuth users who won't use traditional login
-    const crypto = await import('crypto');
-    return crypto.randomBytes(16).toString('hex');
+    return randomBytes(16).toString('hex');
   }
 }
