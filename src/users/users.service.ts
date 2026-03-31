@@ -63,74 +63,32 @@ export class UsersService {
     const limit = params?.limit || 10;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, any> = {};
+    const queryBuilder = this.usersRepository.createQueryBuilder('user');
 
-    if (params?.role) {
-      where.role = params.role;
-    }
-
-    if (params?.isActive !== undefined) {
-      where.isActive = params.isActive;
-    }
-
+    // Apply search filter if provided
     if (params?.search) {
-      // For search, we'll use a more complex query
-      const queryBuilder = this.usersRepository
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.accidentsReported', 'accidentsReported')
-        .leftJoinAndSelect('user.accidentsAssigned', 'accidentsAssigned')
-        .leftJoinAndSelect('user.notifications', 'notifications')
-        .leftJoinAndSelect('user.sessions', 'sessions')
-        .leftJoinAndSelect('user.mediaUploaded', 'mediaUploaded')
-        .leftJoinAndSelect('user.reportsCreated', 'reportsCreated')
-        .leftJoinAndSelect(
-          'user.emergencyServicesAsResponder',
-          'emergencyServicesAsResponder',
-        );
-
       queryBuilder.where(
-        '(user.fullName ILIKE :search OR user.email ILIKE :search)',
+        '(user.fullName ILIKE :search OR user.email ILIKE :search OR user.username ILIKE :search)',
         { search: `%${params.search}%` },
       );
-
-      if (params?.role) {
-        queryBuilder.andWhere('user.role = :role', { role: params.role });
-      }
-
-      if (params?.isActive !== undefined) {
-        queryBuilder.andWhere('user.isActive = :isActive', {
-          isActive: params.isActive,
-        });
-      }
-
-      queryBuilder.orderBy('user.createdAt', 'DESC').skip(skip).take(limit);
-
-      const [users, total] = await queryBuilder.getManyAndCount();
-
-      return {
-        users: users.map((user) => this.mapToUserResponse(user)),
-        total,
-        page,
-        limit,
-      };
     }
 
-    // Simple query without search
-    const [users, total] = await this.usersRepository.findAndCount({
-      where,
-      relations: [
-        'accidentsReported',
-        'accidentsAssigned',
-        'notifications',
-        'sessions',
-        'mediaUploaded',
-        'reportsCreated',
-        'emergencyServicesAsResponder',
-      ],
-      order: { createdAt: 'DESC' },
-      skip,
-      take: limit,
-    });
+    // Apply role filter if provided
+    if (params?.role) {
+      queryBuilder.andWhere('user.role = :role', { role: params.role });
+    }
+
+    // Apply active filter if provided
+    if (params?.isActive !== undefined) {
+      queryBuilder.andWhere('user.isActive = :isActive', {
+        isActive: params.isActive,
+      });
+    }
+
+    // Order by created date descending and apply pagination
+    queryBuilder.orderBy('user.createdAt', 'DESC').skip(skip).take(limit);
+
+    const [users, total] = await queryBuilder.getManyAndCount();
 
     return {
       users: users.map((user) => this.mapToUserResponse(user)),
@@ -143,15 +101,6 @@ export class UsersService {
   async findOne(id: string): Promise<UserResponse> {
     const user = await this.usersRepository.findOne({
       where: { id },
-      relations: [
-        'accidentsReported',
-        'accidentsAssigned',
-        'notifications',
-        'sessions',
-        'mediaUploaded',
-        'reportsCreated',
-        'emergencyServicesAsResponder',
-      ],
     });
 
     if (!user) {
