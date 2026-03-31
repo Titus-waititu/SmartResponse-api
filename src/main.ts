@@ -15,7 +15,14 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  app.use(helmet());
+
+  // Helmet with COOP configuration for OAuth
+  app.use(
+    helmet({
+      crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
 
   // Set global API prefix with versioning, excluding metrics endpoint
 
@@ -23,12 +30,24 @@ async function bootstrap() {
     exclude: ['metrics'],
   });
 
-  // Enable CORS
+  // Enable CORS with proper configuration for OAuth and frontend
+  const corsOrigins = process.env.NODE_ENV === 'production'
+    ? [
+        'https://smartresponse-client.vercel.app',
+        'https://smartresponse-frontend.vercel.app',
+        'https://swift-response-hubs.vercel.app',
+        'https://smartresponse.onrender.com',
+        process.env.FRONTEND_URL, // Add from .env if needed
+      ].filter(Boolean)
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080', 'http://localhost:4000'];
+
   app.enableCors({
-    origin: ['http://localhost:8080', 'http://localhost:4000'], // Allow specific origins (adjust as needed for production)
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: corsOrigins,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Length', 'X-JSON-Response-Length'],
+    maxAge: 3600,
   });
 
   // Swagger API documentation setup
@@ -52,4 +71,5 @@ async function bootstrap() {
     `📚 Swagger documentation: http://localhost:${process.env.PORT ?? 3000}/api/docs`,
   );
 }
+
 void bootstrap();
