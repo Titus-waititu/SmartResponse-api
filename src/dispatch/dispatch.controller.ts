@@ -264,9 +264,9 @@ export class DispatchController {
         data: result,
         message: 'Dispatch sent to responder successfully',
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw new BadRequestException(
-        `Failed to send dispatch: ${error.message}`,
+        `Failed to send dispatch: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -333,12 +333,8 @@ export class DispatchController {
   })
   async getDispatchDetails(
     @Param('emergencyServiceId', ParseUUIDPipe) emergencyServiceId: string,
-    @CurrentUser('sub') userId: string,
   ) {
     try {
-      // Allow dispatcher/admin to view any dispatch, responders only their own
-      const userRole = 'user'; // In real app, get from token
-
       const dispatch = await this.emergencyServiceRepo.findOne({
         where: { id: emergencyServiceId },
         relations: ['accident', 'responder'],
@@ -349,9 +345,9 @@ export class DispatchController {
       }
 
       return dispatch;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new BadRequestException(
-        `Failed to retrieve dispatch details: ${error.message}`,
+        `Failed to retrieve dispatch details: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -385,9 +381,9 @@ export class DispatchController {
         data: updated,
         message: 'Dispatch acknowledged. You are marked as en-route.',
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw new BadRequestException(
-        `Failed to acknowledge dispatch: ${error.message}`,
+        `Failed to acknowledge dispatch: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -415,12 +411,6 @@ export class DispatchController {
         responderId,
         updateStatusDto.status,
         updateStatusDto.notes,
-        updateStatusDto.currentLatitude && updateStatusDto.currentLongitude
-          ? {
-              latitude: updateStatusDto.currentLatitude,
-              longitude: updateStatusDto.currentLongitude,
-            }
-          : undefined,
       );
 
       return {
@@ -428,9 +418,9 @@ export class DispatchController {
         data: updated,
         message: `Status updated to ${updateStatusDto.status}`,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       throw new BadRequestException(
-        `Failed to update status: ${error.message}`,
+        `Failed to update status: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }

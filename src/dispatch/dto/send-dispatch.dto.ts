@@ -8,7 +8,6 @@ import {
   IsEnum,
   IsOptional,
   IsArray,
-  IsObject,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ServiceType } from '../../emergency-services/entities/emergency-service.entity';

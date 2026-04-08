@@ -34,6 +34,7 @@ export class DispatchService {
     userId: string,
     severity: number,
     location: { latitude: number; longitude: number },
+    aiRecommendedServices?: string[],
   ): Promise<DispatchResult> {
     this.logger.log(
       `Dispatching emergency services for accident ${accidentId} with severity ${severity}`,
@@ -42,8 +43,18 @@ export class DispatchService {
     const services: EmergencyService[] = [];
     const dispatchTime = new Date();
 
-    // Determine which services to dispatch based on severity
-    const servicesToDispatch = this.determineServicesNeeded(severity);
+    // Determine which services to dispatch based on severity and AI recommendations
+    let servicesToDispatch = this.determineServicesNeeded(severity);
+
+    // If AI provided recommendations, use them instead
+    if (aiRecommendedServices && aiRecommendedServices.length > 0) {
+      servicesToDispatch = this.convertAiServicesToServiceTypes(
+        aiRecommendedServices,
+      );
+      this.logger.log(
+        `Using AI-recommended services: ${servicesToDispatch.join(', ')}`,
+      );
+    }
 
     // Create emergency service records
     for (const serviceType of servicesToDispatch) {
@@ -54,7 +65,7 @@ export class DispatchService {
         serviceProvider: this.getServiceProvider(serviceType, location),
         contactNumber: this.getEmergencyContact(serviceType),
         dispatchedAt: dispatchTime,
-        notes: `Auto-dispatched based on AI severity analysis: ${severity}/100`,
+        notes: `Auto-dispatched based on AI severity analysis: ${severity}/100${aiRecommendedServices ? '. AI Recommendation: ' + aiRecommendedServices.join(', ') : ''}`,
       });
 
       services.push(await this.emergencyServiceRepo.save(service));
@@ -93,6 +104,33 @@ export class DispatchService {
       services.push(ServiceType.POLICE);
     }
     // Low severity (<30) - no automatic dispatch, just notification
+
+    return services;
+  }
+
+  private convertAiServicesToServiceTypes(aiServices: string[]): ServiceType[] {
+    const services: ServiceType[] = [];
+    const serviceMap: Record<string, ServiceType> = {
+      police: ServiceType.POLICE,
+      ambulance: ServiceType.AMBULANCE,
+      fire: ServiceType.FIRE_DEPARTMENT,
+      'fire department': ServiceType.FIRE_DEPARTMENT,
+      tow: ServiceType.TOW_TRUCK,
+      'tow truck': ServiceType.TOW_TRUCK,
+    };
+
+    for (const service of aiServices) {
+      const normalized = service.toLowerCase().trim();
+      const serviceType = serviceMap[normalized];
+      if (serviceType && !services.includes(serviceType)) {
+        services.push(serviceType);
+      }
+    }
+
+    // Ensure at least police is included for critical accidents
+    if (services.length === 0) {
+      services.push(ServiceType.POLICE);
+    }
 
     return services;
   }
@@ -162,7 +200,17 @@ export class DispatchService {
     severity: number,
     incidentDescription: string,
     location: { latitude: number; longitude: number },
-    dispatchData?: any,
+    dispatchData?: {
+      address?: string;
+      reportNumber?: string;
+      numberOfVehicles?: number;
+      numberOfInjuries?: number;
+      numberOfFatalities?: number;
+      weatherConditions?: string;
+      roadConditions?: string;
+      actionItems?: string[];
+      instructions?: string;
+    },
   ): Promise<{
     emergencyService: EmergencyService;
     notification: Notification;
@@ -306,7 +354,6 @@ export class DispatchService {
     responderId: string,
     newStatus: ServiceStatus,
     notes?: string,
-    currentLocation?: { latitude: number; longitude: number },
   ): Promise<EmergencyService> {
     this.logger.log(
       `Updating dispatch ${emergencyServiceId} status to ${newStatus}`,

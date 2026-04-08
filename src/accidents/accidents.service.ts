@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateAccidentDto } from './dto/create-accident.dto';
@@ -14,6 +14,8 @@ import { DispatchService } from '../dispatch/dispatch.service';
 
 @Injectable()
 export class AccidentsService {
+  private readonly logger = new Logger(AccidentsService.name);
+
   constructor(
     @InjectRepository(Accident)
     private accidentRepository: Repository<Accident>,
@@ -39,50 +41,92 @@ export class AccidentsService {
     images: Express.Multer.File[],
   ): Promise<{
     accident: Accident;
+    aiAnalysis: any;
     dispatchResult: any;
     uploadedImages: any[];
   }> {
-    // 1. Upload and validate images
-    const uploadedImages: { fileUrl: string }[] = [];
-    for (const image of images || []) {
-      const uploadResult = await this.uploadService.validateAndUpload(image);
-      uploadedImages.push(uploadResult);
+    try {
+      this.logger.log(
+        `Creating accident with AI analysis. Images: ${images?.length || 0}`,
+      );
+
+      // 1. Upload and validate images
+      const uploadedImages: { fileUrl: string; publicId?: string }[] = [];
+      if (images && images.length > 0) {
+        for (const image of images) {
+          try {
+            const uploadResult =
+              await this.uploadService.validateAndUpload(image);
+            uploadedImages.push(uploadResult);
+            this.logger.log(`Image uploaded: ${uploadResult.fileUrl}`);
+          } catch (error) {
+            this.logger.warn(
+              `Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            );
+          }
+        }
+      }
+
+      this.logger.log(
+        `Successfully uploaded ${uploadedImages.length} images for AI analysis`,
+      );
+
+      // 2. Analyze severity with AI
+      const imageUrls: string[] = uploadedImages.map((img) => img.fileUrl);
+      const analysis =
+        imageUrls.length > 0
+          ? await this.aiService.analyzeAccidentSeverity(imageUrls)
+          : await this.aiService.analyzeAccidentSeverity([
+              'https://via.placeholder.com/300x200?text=No+Images', // Fallback for testing
+            ]);
+
+      this.logger.log(
+        `AI Analysis Complete - Severity: ${analysis.severity}, Services: ${analysis.recommendedServices.join(', ')}`,
+      );
+
+      // 3. Map AI severity (0-100) to AccidentSeverity enum
+      const severity = this.mapSeverityToEnum(analysis.severity);
+
+      // 4. Create accident record
+      const reportNumber = this.generateReportNumber();
+      const accident = this.accidentRepository.create({
+        ...createAccidentDto,
+        reportNumber,
+        severity,
+        status: AccidentStatus.REPORTED,
+      });
+
+      const savedAccident = await this.accidentRepository.save(accident);
+      this.logger.log(`Accident saved with ID: ${savedAccident.id}`);
+
+      // 5. Auto-dispatch emergency services based on AI analysis
+      const dispatchResult =
+        await this.dispatchService.dispatchEmergencyServices(
+          savedAccident.id,
+          createAccidentDto.reportedById || 'system',
+          analysis.severity,
+          {
+            latitude: Number(createAccidentDto.latitude),
+            longitude: Number(createAccidentDto.longitude),
+          },
+          analysis.recommendedServices, // Pass AI-recommended services
+        );
+
+      this.logger.log(`Emergency services dispatched. Dispatcher notified`);
+
+      return {
+        accident: savedAccident,
+        aiAnalysis: analysis,
+        dispatchResult,
+        uploadedImages,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error in createWithAnalysis: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : '',
+      );
+      throw error;
     }
-
-    // 2. Analyze severity with AI
-    const imageUrls: string[] = uploadedImages.map((img) => img.fileUrl);
-    const analysis = await this.aiService.analyzeAccidentSeverity(imageUrls);
-
-    // 3. Map AI severity (0-100) to AccidentSeverity enum
-    const severity = this.mapSeverityToEnum(analysis.severity);
-
-    // 4. Create accident record
-    const reportNumber = this.generateReportNumber();
-    const accident = this.accidentRepository.create({
-      ...createAccidentDto,
-      reportNumber,
-      severity,
-      status: AccidentStatus.REPORTED,
-    });
-
-    const savedAccident = await this.accidentRepository.save(accident);
-
-    // 5. Auto-dispatch emergency services based on AI analysis
-    const dispatchResult = await this.dispatchService.dispatchEmergencyServices(
-      savedAccident.id,
-      createAccidentDto.reportedById || 'system',
-      analysis.severity,
-      {
-        latitude: Number(createAccidentDto.latitude),
-        longitude: Number(createAccidentDto.longitude),
-      },
-    );
-
-    return {
-      accident: savedAccident,
-      dispatchResult,
-      uploadedImages,
-    };
   }
 
   /**

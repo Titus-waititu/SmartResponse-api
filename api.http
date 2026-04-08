@@ -1,9 +1,9 @@
 @baseUrl = https://smartresponse-api.onrender.com/api/v1
 
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMWQ0OWRhOS04NjQxLTQxODEtOTVlNi1mYWRmOGQwOGU5NmQiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsInVzZXJuYW1lIjoiU3RhbmRhcmQgVXNlciIsImlhdCI6MTc3NDYyNjkzNCwiZXhwIjoxNzc1NDkwOTM0fQ.CPjQVkkTgTD6TeiLDkzoKl_UMu9cXmlX6G5tFeYvKEE
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MGY2ODYyNS0wMzgxLTRkMjgtOWYzMS1hMzM4ZGQyMDlhMzAiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJTeXN0ZW0gQWRtaW4iLCJpYXQiOjE3NzU1OTMyODMsImV4cCI6MTc3NjQ1NzI4M30.lN7guXuYdjebPXWjngIMoz3EfSEvhs6aQROQap98sVI
 @refreshToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1MGY2ODYyNS0wMzgxLTRkMjgtOWYzMS1hMzM4ZGQyMDlhMzAiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJTeXN0ZW0gQWRtaW4iLCJpYXQiOjE3NzM5NDE0MDQsImV4cCI6MTc3NDgwNTQwNH0.o9xdRN2qDXVQADC76kvWrdNNOmDILmQNFhFZ4zduYWg
-@userId = e1d49da9-8641-4181-95e6-fadf8d08e96d
-@accidentId = 4b420d5d-753c-4e06-9ccd-3d1cd5903ebf
+@userId = 50f68625-0381-4d28-9f31-a338dd209a30
+@accidentId = 5003ae90-c245-42ad-9998-06d00ea66c89
 @sessionId = 8f192b-819a
 @reportId = 12fa
 @vehicleId = 55ba
@@ -20,7 +20,7 @@ POST {{baseUrl}}/auth/signin
 Content-Type: application/json
 
 {
-  "email": "dispatcher@example.com",
+  "email": "admin@example.com",
   "password": "Password123!"
 }
 
@@ -58,7 +58,7 @@ POST {{baseUrl}}/auth/forgot-password
 Content-Type: application/json
 
 {
-  "email": "john.doe@example.com"
+  "email": "andreastailas96@gmail.com"
 }
 
 ### Reset password
@@ -67,7 +67,8 @@ Content-Type: application/json
 
 {
   "token": "reset-token-here",
-  "newPassword": "NewPassword123!"
+  "newPassword": "NewPassword123!",
+  "confirmPassword": "NewPassword123!"
 }
 
 ### Get all sessions
@@ -326,7 +327,7 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "imageUrl": "https://storage.example.com/license_plate.jpg"
+  "imageUrl": "https://images.unsplash.com/photo-1575987446487-56eba08666cf?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
 }
 
 ### Classify accident severity

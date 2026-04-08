@@ -25,7 +25,12 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.OFFICER, UserRole.EMERGENCY_RESPONDER,UserRole.DISPATCHER)
+  @Roles(
+    UserRole.ADMIN,
+    UserRole.OFFICER,
+    UserRole.EMERGENCY_RESPONDER,
+    UserRole.DISPATCHER,
+  )
   @ApiOperation({
     summary: 'Create notification (Admin/Officer/Emergency Responder)',
   })

@@ -76,14 +76,20 @@ export class AuthController {
   @Public()
   @Get('google/callback')
   @UseGuards(GoogleOauthGuard)
-  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+  async googleAuthRedirect(
+    @Req() req: Record<string, unknown>,
+    @Res() res: Response,
+  ) {
     try {
-      const user = req.user;
+      const user = req.user as Record<string, unknown>;
       if (!user) {
         throw new UnauthorizedException('Google authentication failed');
       }
 
-      const result = await this.authService.googleAuthRedirect(user);
+      const result = (await this.authService.googleAuthRedirect(user)) as {
+        tokens: { accessToken: string; refreshToken: string };
+        user: { id: string; role: string; username: string; email: string };
+      };
       const { accessToken, refreshToken } = result.tokens;
 
       // Get frontend URL from environment or use default
@@ -101,8 +107,11 @@ export class AuthController {
 
       // Redirect to frontend with tokens and user info in URL
       return res.redirect(frontendURL.toString());
-    } catch (error) {
-      console.error('Google callback error:', error);
+    } catch (error: unknown) {
+      console.error(
+        'Google callback error:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       const baseFrontendUrl =
         process.env.FRONTEND_URL || 'http://localhost:8080';
       const errorUrl = new URL(`${baseFrontendUrl}/auth/error`);
@@ -112,18 +121,19 @@ export class AuthController {
   }
 
   @Get('me')
-  getMe(@Req() req: Request) {
+  getMe(@Req() req: Record<string, unknown>) {
     // `req.user` is populated by AtStrategy (global guard)
-    if (!req.user) {
+    const user = req.user as Record<string, unknown> | undefined;
+    if (!user) {
       throw new UnauthorizedException('User not authenticated');
     }
 
     // The JWT payload now contains: { sub, email, role, username }
     return {
-      id: req.user['sub'],
-      username: req.user['username'],
-      email: req.user['email'],
-      role: req.user['role'],
+      id: user['sub'] as string,
+      username: user['username'] as string,
+      email: user['email'] as string,
+      role: user['role'] as string,
     };
   }
 

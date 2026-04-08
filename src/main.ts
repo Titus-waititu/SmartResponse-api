@@ -31,7 +31,12 @@ async function bootstrap() {
   });
 
   // Enable CORS with proper configuration for OAuth and frontend
-  const developmentOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080', 'http://localhost:4000'];
+  const developmentOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:8080',
+    'http://localhost:4000',
+  ];
   const productionOrigins = [
     'https://smartresponse-client.vercel.app',
     'https://smartresponse-frontend.vercel.app',
@@ -47,7 +52,12 @@ async function bootstrap() {
     origin: corsOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: [
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'X-Requested-With',
+    ],
     exposedHeaders: ['Content-Length', 'X-JSON-Response-Length'],
     maxAge: 3600,
   });

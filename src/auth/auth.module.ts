@@ -9,6 +9,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RfStrategy } from './strategies/jwt-refresh.strategy';
 import { GoogleStrategy } from './strategies/google.strategies';
 import { UsersModule } from '../users/users.module';
+import { MailModule } from '../mail/mail.module';
 import { Session } from './entities/session.entity';
 import { User } from '../users/entities/user.entity';
 
@@ -30,6 +31,7 @@ import { User } from '../users/entities/user.entity';
       inject: [ConfigService],
     }),
     UsersModule,
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, RfStrategy, GoogleStrategy],

@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { UsersModule } from './users/users.module';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { AccidentsModule } from './accidents/accidents.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { MediaModule } from './media/media.module';
@@ -16,9 +16,6 @@ import { LoggerMiddleware } from 'logger.middleware';
 import { AiModule } from './ai/ai.module';
 import { UploadModule } from './upload/upload.module';
 import { DispatchModule } from './dispatch/dispatch.module';
-import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
-import { createKeyv, Keyv } from '@keyv/redis';
-import { CacheableMemory } from 'cacheable';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 

@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -18,16 +19,20 @@ import {
 import { UpdateProfileDto } from './dto/update-auth.dto';
 import { User } from '../users/entities/user.entity';
 import { Session } from './entities/session.entity';
+import { MailService } from '../mail/mail.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
     @InjectRepository(Session) private sessionsRepository: Repository<Session>,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private mailService: MailService,
   ) {}
 
   private async hashData(data: string): Promise<string> {
@@ -228,8 +233,14 @@ export class AuthService {
       sessionId,
     };
   }
-  async googleAuthRedirect(user: any) {
-    const { id, email, role, username } = user;
+  async googleAuthRedirect(user: Record<string, unknown>): Promise<{
+    user: { id: string; username: string; email: string; role: string };
+    tokens: { accessToken: string; refreshToken: string };
+  }> {
+    const id = user.id as string;
+    const email = user.email as string;
+    const role = user.role as string;
+    const username = user.username as string;
     const { accessToken, refreshToken } = await this.getTokens(
       id,
       email,
@@ -249,7 +260,7 @@ export class AuthService {
       },
     };
   }
-  
+
   async refreshTokens(id: string, refreshToken: string) {
     const user = await this.usersRepository.findOne({
       where: { id },
@@ -442,9 +453,21 @@ export class AuthService {
       throw new NotFoundException(`User with email ${email} not found`);
     }
 
-    this.generateResetToken(user.id, user.email);
-    // TODO: Send email with reset token
-    // await this.mailService.sendResetEmail(email, token);
+    const resetToken = this.generateResetToken(user.id, user.email);
+
+    try {
+      await this.mailService.sendPasswordResetEmail(email, resetToken);
+      this.logger.log(`Password reset email sent to ${email}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send password reset email to ${email}`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+      throw new BadRequestException(
+        'Failed to send password reset email. Please try again later.',
+      );
+    }
+
     return 'Password reset email sent successfully';
   }
 
@@ -471,13 +494,14 @@ export class AuthService {
     // Send confirmation email
     if (user?.email) {
       try {
-        // TODO: Send password reset success email
-        // await this.mailService.sendPasswordResetSuccessEmail(user.email);
+        await this.mailService.sendPasswordResetSuccessEmail(user.email);
+        this.logger.log(`Password reset success email sent to ${user.email}`);
       } catch (error) {
-        console.error(
-          'Failed to send password reset confirmation email:',
-          error,
+        this.logger.error(
+          `Failed to send password reset confirmation email to ${user.email}`,
+          error instanceof Error ? error.message : 'Unknown error',
         );
+        // Don't throw error here - password was reset successfully
       }
     }
 
